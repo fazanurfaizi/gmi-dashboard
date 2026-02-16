@@ -1,0 +1,34 @@
+{
+  "name": "excel-dashboard",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.11.3",
+    "@quasar/extras": "^1.17.0",
+    "@vueuse/nuxt": "14.2.1",
+    "better-sqlite3": "^12.6.2",
+    "drizzle-orm": "^0.45.1",
+    "gridstack": "^12.4.2",
+    "nuxt": "^4.3.1",
+    "nuxt-auth-utils": "0.5.28",
+    "nuxt-quasar-ui": "3.0.0",
+    "pinia": "^3.0.4",
+    "plotly.js-dist-min": "^3.3.1",
+    "quasar": "^2.18.6",
+    "vue": "^3.5.28",
+    "vue-router": "^4.6.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/plotly.js-dist-min": "^2.3.4",
+    "drizzle-kit": "^0.31.9"
+  }
+}
