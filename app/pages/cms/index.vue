@@ -1,6 +1,7 @@
 <template>
   <q-page padding>
-    <q-form v-if="!loading" @submit="submit">
+    <spinner-loading v-if="loading" />
+    <q-form v-else @submit="submit">
       <div class="row">
         <Card title="General Info" col="12" use-top-section>
           <template #top-section-right>
@@ -98,7 +99,7 @@ const widgetOptions = [
   { label: 'Add Donut Chart', type: 'donut_chart' },
   { label: 'Add Sparkline Chart', type: 'sparkline_chart' },
   { label: 'Add Achievement Card', type: 'achievement_card' },
-  { label: 'Add Table', type: 'inventory' },
+  { label: 'Add Table', type: 'table' },
 
 ]
 

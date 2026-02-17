@@ -54,21 +54,19 @@
             </tr>
           </thead>
           <tbody>
-            <s-drag v-model="dataModel.config.columns" container="tr">
-              <template #default="{ item: v, index: i }">
-                <td class="text-center">
-                  <q-btn flat dense color="negative" icon="delete" @click="delColumn(v, i)" />
-                </td>
-                <td>{{ v.id = `${v.name}${i}` }}</td>
-                <markup-table-td-input :i="i" v-model="v.label" type="input" />
-                <markup-table-td-input :i="i" v-model="v.format" type="select" :options="optFormat" />
-                <markup-table-td-input v-if="v.format == 'number'" :i="i" v-model="v.precision" type="number" :precision="0" />
-                <td v-else class="bg-grey-3"></td>
-                <markup-table-td-input v-if="v.format" :i="i" v-model="v.aggregation" type="select" :options="optAggregation[v.format]" />
-                <markup-table-td-input v-if="['date', 'datetime'].includes(v.format)" :i="i" v-model="v.datefilter" type="checkbox" />
-                <td v-else class="bg-grey-3"></td>
-              </template>
-            </s-drag>
+            <tr v-for="(v, i) in dataModel.config.columns" :key="i">
+              <td class="text-center">
+                <q-btn flat dense color="negative" icon="delete" @click="delColumn(v, i)" />
+              </td>
+              <td>{{ v.id = `${v.name}${i}` }}</td>
+              <markup-table-td-input :i="i" v-model="v.label" type="input" />
+              <markup-table-td-input :i="i" v-model="v.format" type="select" :options="optFormat" />
+              <markup-table-td-input v-if="v.format == 'number'" :i="i" v-model="v.precision" type="number" :precision="0" />
+              <td v-else class="bg-grey-3"></td>
+              <markup-table-td-input v-if="v.format" :i="i" v-model="v.aggregation" type="select" :options="optAggregation[v.format]" />
+              <markup-table-td-input v-if="['date', 'datetime'].includes(v.format)" :i="i" v-model="v.datefilter" type="checkbox" />
+              <td v-else class="bg-grey-3"></td>
+            </tr>
           </tbody>
         </q-markup-table>
 
@@ -100,7 +98,11 @@
               </tr>
             </tbody>
             <tbody v-else>
-              <tr v-for="r in rawData.rows" :key="r"><td v-for="col in rawData.cols" :key="col">{{ r[col.id] }}</td></tr>
+              <tr v-for="r in rawData.rows" :key="r">
+                <td v-for="col in rawData.cols" :key="col">
+                  {{ r[col.id] }}
+                </td>
+              </tr>
             </tbody>
           </q-markup-table>
         </div>
@@ -128,7 +130,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(v, i) in dataModel.config.query.filters">
+              <tr v-for="(v, i) in dataModel.config.query.filters" :key="i">
                 <td class="text-center"><q-btn flat dense color="negative" icon="delete" @click="delQueryFilter(v, i)" /></td>
                 <markup-table-td-input :i="i" v-model="v.name" type="select" :options="rawData.cols" />
                 <markup-table-td-input :i="i" v-model="v.operator" type="select" :options="getOptOperator(v.name)" />
