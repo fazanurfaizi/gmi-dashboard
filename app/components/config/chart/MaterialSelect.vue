@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MaterialType } from '~/utils/gridstack'
+import type { MaterialType } from '~~/types/dashboard';
 
 const props = defineProps({
   modelValue: { type: String as PropType<MaterialType | null>, default: null },

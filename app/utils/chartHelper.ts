@@ -1,7 +1,175 @@
 import { Dark } from 'quasar'
-import type { ChartStyleConfig } from './gridstack'
+import { WidgetType } from '~~/types/dashboard'
+import type { ChartConfig, ChartStyleConfig } from '~~/types/dashboard'
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+export const transformChartConfig = (config: ChartConfig, data: any[]) => {
+  const traces: any[] = [];
+  const layout: any = {
+    title: config.title,
+    showlegend: config.styles?.showLegend !== false,
+    legend: {
+      orientation: config.styles?.legendPosition === 'bottom' || config.styles?.legendPosition === 'top' ? 'h' : 'v',
+      y: config.styles?.legendPosition === 'bottom' ? -0.2 : config.styles?.legendPosition === 'top' ? 1.1 : 1,
+      x: config.styles?.legendPosition === 'right' ? 1.05 : config.styles?.legendPosition === 'left' ? -0.2 : 0,
+    },
+    xaxis: {
+      title: config.styles?.xAxisLabel,
+      showgrid: config.styles?.showGrid !== false,
+      visible: config.styles?.showXAxis !== false,
+    },
+    yaxis: {
+      title: config.styles?.yAxisLabel,
+      showgrid: config.styles?.showGrid !== false,
+      visible: config.styles?.showYAxis !== false,
+    },
+    margin: { t: 40, r: 20, l: 40, b: 40 },
+  };
+
+  if (!data || data.length === 0) return { data: [], layout };
+
+  const dimension = config.dimensions?.[0];
+  const metric = config.metrics?.[0];
+
+  if (!dimension || !metric) return { data: [], layout };
+
+  const xValues = data.map(d => d[dimension]);
+  const yValues = data.map(d => d[metric]);
+
+  switch (config.type) {
+    case WidgetType.BAR:
+      traces.push({
+        x: xValues,
+        y: yValues,
+        type: 'bar',
+        name: metric,
+        marker: {
+          color: config.styles?.colorPalette?.[0]
+        }
+      });
+      
+      // Line Overlay (Combo Chart)
+      if (config.secondAxis) {
+        const y2Values = data.map(d => d[config.secondAxis!]);
+        traces.push({
+          x: xValues,
+          y: y2Values,
+          type: config.secondAxisType === 'bar' ? 'bar' : 'scatter',
+          mode: config.secondAxisType === 'bar' ? undefined : 'lines+markers',
+          name: config.secondAxis,
+          yaxis: 'y2',
+          line: {
+             shape: config.styles?.lineShape || 'linear',
+             width: 2
+          }
+        });
+        layout.yaxis2 = {
+          title: config.secondAxis,
+          overlaying: 'y',
+          side: 'right',
+          showgrid: false
+        };
+      }
+      
+      if (config.styles?.isStacked) {
+        layout.barmode = 'stack';
+      }
+      break;
+
+    case WidgetType.LINE:
+    case WidgetType.AREA:
+      traces.push({
+        x: xValues,
+        y: yValues,
+        type: 'scatter',
+        mode: config.styles?.showMarkers ? 'lines+markers' : 'lines',
+        fill: config.type === WidgetType.AREA || config.styles?.fillArea ? 'tozeroy' : 'none',
+        name: metric,
+        line: {
+          shape: config.styles?.lineShape || 'linear',
+          width: config.styles?.lineWidth || 2,
+          color: config.styles?.colorPalette?.[0]
+        }
+      });
+      break;
+
+    case WidgetType.PIE:
+    case WidgetType.DONUT:
+      traces.push({
+        labels: xValues,
+        values: yValues,
+        type: 'pie',
+        hole: config.type === WidgetType.DONUT || config.styles?.holeSize ? (config.styles?.holeSize || 0.5) : 0,
+        name: metric,
+        marker: {
+          colors: config.styles?.colorPalette
+        }
+      });
+      break;
+      
+    case WidgetType.WATERFALL:
+      // Simple waterfall implementation
+      // For more complex relative/total logic, we might need a 'measure' column in data
+      const measure = config.measureColumn ? data.map(d => d[config.measureColumn!]) : undefined;
+      
+      traces.push({
+        x: xValues,
+        y: yValues,
+        measure: measure,
+        type: 'waterfall',
+        name: metric,
+        connector: {
+          line: {
+            color: config.styles?.connectorLineColor || 'rgb(63, 63, 63)'
+          }
+        },
+        increasing: { marker: { color: config.styles?.increasingColor || '#2E7D32' } },
+        decreasing: { marker: { color: config.styles?.decreasingColor || '#D32F2F' } },
+        totals: { marker: { color: config.styles?.totalColor || '#1976D2' } }
+      });
+      break;
+
+    case WidgetType.SPARKLINE:
+      // Sparkline is a stripped down chart
+      layout.showlegend = false;
+      layout.xaxis.visible = false;
+      layout.xaxis.showgrid = false;
+      layout.yaxis.visible = false;
+      layout.yaxis.showgrid = false;
+      layout.margin = { t: 5, r: 5, l: 5, b: 5 }; // Minimize margins
+
+      traces.push({
+        x: xValues,
+        y: yValues,
+        type: config.styles?.sparklineType === 'bar' ? 'bar' : 'scatter',
+        mode: config.styles?.sparklineType === 'bar' ? undefined : 'lines',
+        fill: config.styles?.sparklineType === 'area' ? 'tozeroy' : 'none',
+        name: metric,
+        line: {
+          color: config.styles?.colorPalette?.[0] || '#2196F3',
+          width: 2
+        }
+      });
+      break;
+
+    case WidgetType.SCATTER:
+      traces.push({
+        x: xValues,
+        y: yValues,
+        type: 'scatter',
+        mode: 'markers',
+        name: metric,
+        marker: {
+          size: config.styles?.markerSize || 10,
+          color: config.styles?.colorPalette?.[0]
+        }
+      });
+      break;
+  }
+
+  return { data: traces, layout };
+};
 
 export const enhanceXAxisDensity = (ch: any, timeframe: string, screen: any) => {
     const xaxis = ch.layout?.xaxis

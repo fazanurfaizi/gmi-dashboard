@@ -6,10 +6,6 @@
           <q-input v-model="dataModel.code" label="Code" readonly />
           <q-input v-model="dataModel.name" label="Name" readonly />
         </Card>
-        <Card title="Config" col="6">
-          <q-select v-model="safeConfig.defaultDateFilter" label="Default Date Filter" :options="optDateTypes"
-            option-value="value" :option-label="(v: any) => v.label" />          
-        </Card>
       </div>
 
       <div class="row">
@@ -71,7 +67,6 @@ import { useApi } from '~/composables/useApi'
 import { useAlert } from '~/composables/useAlert'
 import type { Dashboard, WidgetData } from '~~/types/dashboard'
 import { initGrid, addWidget, getWidget, updateWidgetContent, removeWidget, removeAllWidget, getLayout } from '~/utils/gridstack'
-import { types as optDateTypes } from '~/utils/dateHelper'
 
 import FormChart from '~/components/form/Chart.vue'
 import FormTable from '~/components/form/Table.vue'
@@ -108,8 +103,6 @@ const activeTab = ref<string | null>('general')
 
 const currentWidget = ref<WidgetData>()
 
-const safeConfig = computed(() => dataModel.value.config || {})
-
 const gridContainer = ref<HTMLElement | null>(null)
 const widgets = ref<any[]>([])
 
@@ -117,7 +110,6 @@ const COLORS = { RED: '#D32F2F', GREEN: '#388E3C', BLUE: '#1976D2', Rain: '#87c5
 
 const widgetOptions = [
   { label: 'Add Chart', type: 'combine_chart' },
-  { label: 'Add Bar Chart', type: 'bar_chart' },
   { label: 'Add Waterfall', type: 'waterfall_chart' },
   { label: 'Add Area Chart', type: 'area_chart' },
   { label: 'Add Donut Chart', type: 'donut_chart' },
@@ -159,8 +151,8 @@ const getData = async (id: string | number) => {
         if (gridContainer.value) {
           initGrid(gridContainer.value)
 
-          if (data.templates && Array.isArray(data.templates) && data.templates.length > 0) 
-            loadSavedWidgets(data.templates)
+          if (data.widgets && Array.isArray(data.widgets) && data.widgets.length > 0) 
+            loadSavedWidgets(data.widgets)
         }
       })
     }
@@ -173,9 +165,9 @@ const getData = async (id: string | number) => {
   }
 }
 
-const loadSavedWidgets = (templates: any[]) => {
+const loadSavedWidgets = (widgets: any[]) => {
   removeAllWidget()
-  templates.forEach((t) => {
+  widgets.forEach((t) => {
     const w = addWidget(t)
     if (w) {
       const newWidget = { ...t, ...w }
@@ -195,7 +187,7 @@ const submit = async () => {
   if (validateSubmit()) {
     $alert.loadingOverlay(true, 'Saving...')
     let status = 600
-    dataModel.value.templates = getLayout()
+    dataModel.value.widgets = getLayout()
     try {
       if (dataModel.value.id) status = await update()
       else status = await save()

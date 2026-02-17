@@ -20,10 +20,7 @@ export default defineNitroPlugin(async () => {
             await db.insert(dashboards).values({
                 name: 'General Dashboard',
                 code: DEFAULT_DASHBOARD_CODE,
-                templates: [],
-                config: {
-                    defaultDateFilter: 'thisWeek'
-                },
+                widgets: [],
                 createdAt: new Date(),
                 updatedAt: new Date()
             })

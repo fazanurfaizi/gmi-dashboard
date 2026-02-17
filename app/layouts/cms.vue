@@ -2,7 +2,6 @@
     <q-layout view="hHh Lpr lFf">
         <q-header elevated class="bg-primary text-white">
             <q-toolbar>
-                <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
                 <q-toolbar-title>
                     CMS Admin
                 </q-toolbar-title>
@@ -10,27 +9,7 @@
                     <q-tooltip>Logout</q-tooltip>
                 </q-btn>
             </q-toolbar>
-        </q-header>
-
-        <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
-            <q-scroll-area class="fit">
-                <q-list>
-                    <q-item-label header>Menu</q-item-label>
-
-                    <q-item clickable v-ripple to="/cms" active-class="text-primary bg-blue-1">
-                        <q-item-section avatar>
-                            <q-icon name="dashboard" />
-                        </q-item-section>
-                        <q-item-section>
-                            Dashboard CMS
-                        </q-item-section>
-                    </q-item>
-
-                    <!-- Add more CMS menu items here -->
-
-                </q-list>
-            </q-scroll-area>
-        </q-drawer>
+        </q-header>       
 
         <q-page-container class="bg-grey-1">
             <q-page>

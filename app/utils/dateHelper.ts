@@ -76,6 +76,10 @@ const subtractYears = (d: Date, n: number): Date => {
   return date
 }
 
+export const today = (format = 'YYYY-MM-DD'): string => {
+  return toDate(new Date(), format)
+}
+
 export const transformDate = (type: 'today' | 'thisWeek' | 'lastWeek' | 'MTD' | 'thisQuarter' | 'YTD' | 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'last1Month' | 'last2Month' | 'last3Month' | 'last1Year' | 'last2Year' | 'last3Year') => {
   const now = new Date()
   const year = now.getFullYear()
@@ -110,6 +114,10 @@ export const transformDate = (type: 'today' | 'thisWeek' | 'lastWeek' | 'MTD' | 
   }
 
   return { from: formatDate(from), to: formatDate(to) }
+}
+
+export const readDate = (date: string | Date | number, includeTime = false): string => {
+  return includeTime ? toDate(date, 'DD-MMM-YY HH:mm') : toDate(date, 'DD-MMM-YY')
 }
 
 export function toQuasarDate(d: any): Date {

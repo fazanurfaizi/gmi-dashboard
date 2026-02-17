@@ -11,7 +11,7 @@ export const runMigrations = async () => {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT,
                 code TEXT UNIQUE,
-                templates TEXT,
+                widgets TEXT,
                 config TEXT,
                 created_at INTEGER DEFAULT (cast(strftime('%s','now') as int) * 1000),
                 updated_at INTEGER DEFAULT (cast(strftime('%s','now') as int) * 1000)

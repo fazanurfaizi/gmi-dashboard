@@ -23,11 +23,10 @@
 
                 <div class="col-12 col-md-6">
                   <template v-if="!loading">
-                    <q-select 
-                      v-model="dataModel.config.app" 
-                      label="Application" 
-                      :options="Object.keys(opt.modules)" 
-                      outlined dense options-dense 
+                    <q-input 
+                      v-model="dataModel.config.spreadsheetId" 
+                      label="Speadhsheet ID"                       
+                      outlined dense
                     />
                   </template>
                   <q-skeleton v-else type="QInput" />
@@ -35,28 +34,15 @@
 
                 <div class="col-12 col-md-6">
                   <template v-if="!loading">
-                    <q-select 
-                      v-model="dataModel.config.endpoint" 
-                      label="Module / Endpoint" 
-                      :options="moduleApp" 
+                    <q-input 
+                      v-model="dataModel.config.sheetName" 
+                      label="Sheet Name" 
                       @update:modelValue="getColumns()" 
-                      outlined dense options-dense 
+                      outlined dense
                     />
                   </template>
                   <q-skeleton v-else type="QInput" />
-                </div>
-
-                <div class="col-12">
-                  <q-item tag="label" class="q-pa-none bg-grey-1 rounded-borders q-px-md" v-ripple>
-                    <q-item-section avatar>
-                      <q-toggle v-model="dataModel.config.query.applyFilterExactDateEnd" color="primary" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Exact Date Only</q-item-label>
-                      <q-item-label caption>Disable date range filtering (uses specific date only)</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </div>
+                </div>                
               </div>
             </q-card-section>
           </q-card>

@@ -70,7 +70,7 @@ export function addWidget(data: WidgetData): WidgetData | null {
     const innerContent = transformInner(item)
 
     const html = `
-        <div class="card-header row items-center justify-between bg-${color} round q-px-sm q-py-xs q-mb-sm">
+        <div class="card-header row items-center justify-between bg-primary round q-px-sm q-py-xs q-mb-sm">
             <div class="card-header-title q-px-sm text-bold text-white" style="${showHeader}">${data.title || ''}</div>
             <div class="row no-wrap items-center q-ml-auto">${editBtn} ${delBtn}</div>
         </div>
