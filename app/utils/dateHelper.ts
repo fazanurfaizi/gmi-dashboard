@@ -81,7 +81,7 @@ export const transformDate = (type: 'today' | 'thisWeek' | 'lastWeek' | 'MTD' | 
   const year = now.getFullYear()
 
   let from: Date
-  let to: Date = now 
+  let to: Date = now
 
   switch (type) {
     case 'today': from = to = now; break
@@ -117,13 +117,41 @@ export function toQuasarDate(d: any): Date {
   return new Date(d)
 }
 
+export function date2millis(dateTime: string, local = false): number {
+  try {
+    const time = new Date(dateTime).getTime()
+    const tzOffset = local ? new Date().getTimezoneOffset() * 60000 : 0
+    return time + tzOffset
+  } catch (error) {
+    console.error("Invalid date format for 'date2millis'", error)
+    return 0
+  }
+}
+
 export function toDate(dateInput: string | Date | number, format = 'YYYY-MM-DD'): string {
-    try {
-        return date.formatDate(dateInput, format)
-    } catch (error) {
-        console.error("Invalid date input for 'toDate'", error)
-        return ''
+  try {
+    return date.formatDate(dateInput, format)
+  } catch (error) {
+    console.error("Invalid date input for 'toDate'", error)
+    return ''
+  }
+}
+
+export function ym2date(yearMonth: string): string {
+  try {
+    const months = ['', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    const [monthStr, year] = yearMonth.split(' ')
+    if (monthStr) {
+      const monthIndex = months.indexOf(monthStr.toLowerCase())
+      if (monthIndex <= 0 || !year) return ''
+      const month = monthIndex < 10 ? `0${monthIndex}` : `${monthIndex}`
+      return `${year}-${month}-01`
     }
+    return ''
+  } catch (error) {
+    console.error("Invalid input for 'ym2date'", error)
+    return ''
+  }
 }
 
 export function addDays(d: Date, days: number) {

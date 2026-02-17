@@ -10,33 +10,31 @@
       <thead>
         <tr>
           <th style="width: 40px">#</th>
-          <th-input>Column</th-input>
-          <th-input>Operator</th-input>
-          <th-input>Value</th-input>
+          <markup-table-th-input>Column</markup-table-th-input>
+          <markup-table-th-input>Operator</markup-table-th-input>
+          <markup-table-th-input>Value</markup-table-th-input>
         </tr>
       </thead>
       <tbody>
-        <s-drag v-model="filters" container="tr" handle=".drag-handle">
-          <template #default="{ item: v, index: i }">
-            <td class="text-center">
-              <div class="row no-wrap items-center justify-center">
-                <q-icon name="drag_indicator" class="drag-handle cursor-pointer text-grey-5 q-mr-xs" size="xs" />
-                <q-btn flat dense color="negative" icon="delete" size="sm" @click="removeFilter(i)" />
-              </div>
-            </td>
-            <td-input :i="i" v-model="v.name" type="select" :options="effectiveColumns" option-label="name" option-value="name" @update:model-value="resetRow(v)" />
-            <td-input :i="i" v-model="v.operator" type="select" :options="getOperatorOptions(v.name)" />
-            <td-input v-if="v.operator === 'order'" :i="i" v-model="v.value" type="select" :options="['ASC', 'DESC']" />
-            <td-input v-else :i="i" v-model="v.value" :type="getValueInputType(v.name)" />
-          </template>
-        </s-drag>
+        <tr v-for="(v, i) in filters" :key="i">
+          <td class="text-center">
+            <div class="row no-wrap items-center justify-center">
+              <q-icon name="drag_indicator" class="drag-handle cursor-pointer text-grey-5 q-mr-xs" size="xs" />
+              <q-btn flat dense color="negative" icon="delete" size="sm" @click="removeFilter(i)" />
+            </div>
+          </td>
+          <markup-table-td-input :i="i" v-model="v.name" type="select" :options="effectiveColumns" option-label="name" option-value="name" @update:model-value="resetRow(v)" />
+          <markup-table-td-input :i="i" v-model="v.operator" type="select" :options="getOperatorOptions(v.name)" />
+          <markup-table-td-input v-if="v.operator === 'order'" :i="i" v-model="v.value" type="select" :options="['ASC', 'DESC']" />
+          <markup-table-td-input v-else :i="i" v-model="v.value" :type="getValueInputType(v.name)" />
+        </tr>
       </tbody>
     </q-markup-table>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { FilterItem } from '~/utils/gridstack'
+import type { FilterItem } from '~~/types/dashboard';
 
 interface ColumnDef { name: string; format?: string; [key: string]: any }
 
@@ -135,14 +133,14 @@ const resetRow = (item: FilterItem) => {
   item.value = null
 }
 
-const getOperatorOptions = (colName: string | null) => {
+const getOperatorOptions = (colName: string | number | null) => {
   if (!colName) return []
   const col = effectiveColumns.value.find((c) => c.name === colName)
   if (col && col.format === 'text') return props.operatorOptions.text
   return props.operatorOptions.nontext
 }
 
-const getValueInputType = (colName: string | null) => {
+const getValueInputType = (colName: string | number | null) => {
   if (!colName) return 'input'
   const col = effectiveColumns.value.find((c) => c.name === colName)
   if (col && col.format === 'number') return 'number'

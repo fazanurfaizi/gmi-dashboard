@@ -8,9 +8,11 @@ export const useApi = () => {
     const defaults = {
       baseURL: '/api', // Points to our local Nuxt server
       headers: {},
-      onResponseError({ response }: any) {
-        if (response.status === 401) {
-          auth.logout() // Auto logout on 401
+      onResponseError(ctx: any = {}) {
+        const { response } = ctx
+        // Only check status if response actually exists (it won't on network errors)
+        if (response && response.status === 401) {
+          auth.logout()
         }
       }
     }

@@ -6,7 +6,7 @@
         <div v-if="isVisible(item)" class="q-pa-sm col-12 col-md-6">
           <q-card flat bordered class="q-pa-sm">
             <div class="q-pa-sm text-bold">{{ getLabel(item) }}</div>
-            <f-color v-model="item.color" label="Color" />
+            <q-color v-model="item.color" label="Color" />
           </q-card>
         </div>
       </template>
@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ColorSeries, MaterialType } from '~/utils/gridstack'
+import type { ColorSeries, MaterialType } from '~~/types/dashboard';
 
 const props = defineProps<{ modelValue: ColorSeries[] | undefined; material?: MaterialType }>()
 const emit = defineEmits(['update:modelValue'])

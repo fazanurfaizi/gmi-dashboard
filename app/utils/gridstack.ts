@@ -1,13 +1,16 @@
 import type { GridStackNode } from 'gridstack'
 import type { WidgetData } from '~~/types/dashboard'
-import { GridStack } from 'gridstack'
+import { GridStack } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css'
+// import 'gridstack/dist/gridstack-extra.css';
 
 export const widgets = ref<WidgetData[]>([])
 const widgetCustoms = ['combine_chart', 'table']
-let grid: GridStack | null = null
+let grid: any | null = null
 
 export function initGrid(container: HTMLElement) {
+    if (process.server) return
+
     widgets.value = []
 
     grid = GridStack.init(
@@ -67,15 +70,13 @@ export function addWidget(data: WidgetData): WidgetData | null {
     const innerContent = transformInner(item)
 
     const html = `
-        <div class="grid-stack-item-content">
-            <div class="card-header row items-center justify-between bg-${color} round q-px-sm q-py-xs q-mb-sm">
+        <div class="card-header row items-center justify-between bg-${color} round q-px-sm q-py-xs q-mb-sm">
             <div class="card-header-title q-px-sm text-bold text-white" style="${showHeader}">${data.title || ''}</div>
             <div class="row no-wrap items-center q-ml-auto">${editBtn} ${delBtn}</div>
-            </div>
-            <div class="widget-body">
+        </div>
+        <div class="widget-body">
             <div id="${item.id}_content" class="q-px-sm" style="width:100%;flex:1 1 auto;">
                 ${innerContent}
-            </div>
             </div>
         </div>`
 
@@ -84,11 +85,18 @@ export function addWidget(data: WidgetData): WidgetData | null {
         x: item.x,
         y: item.y,
         w: item.w,
-        h: item.h,
-        content: html,
+        h: item.h,        
     }
 
-    grid.addWidget(node)
+    const el = grid.addWidget(node)
+    if (el) {
+        const contentEl = el.querySelector('.grid-stack-item-content')
+        if (contentEl) {
+            contentEl.innerHTML = html
+        } else {
+            el.innerHTML = `<div class="grid-stack-item-content">${html}</div>`
+        }
+    }
 
     const existingIdx = widgets.value.findIndex((w) => w.id === id)
     if (existingIdx >= 0) {

@@ -1,5 +1,12 @@
 <template>
-  <f-select :col="props.col" v-model="model" :options="options" label="Default Timeframe Value" optionValue="value" :option-label="(val: any) => val.label" :required="required" />
+  <div
+    class="col-12 col-md-6"
+    :class="{
+      col: `col-md-${props.col}`
+    }"
+  >
+    <q-select v-model="model" :options="options" label="Default Timeframe Value" optionValue="value" :option-label="(val: any) => val.label" :required="required" />
+  </div>
 </template>
 
 <script setup lang="ts">

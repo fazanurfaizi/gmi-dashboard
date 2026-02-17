@@ -1,9 +1,16 @@
 <template>
-  <f-select :col="props.col" v-model="model" :options="options" label="Timeframe" :required="required" />
+  <div
+    class="col-12 col-md-6"
+    :class="{
+      col: `col-md-${props.col}`
+    }"
+  >
+    <q-select v-model="model" :options="options" label="Timeframe" :required="required" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import type { ChartTimeframe } from '~/utils/gridstack'
+import type { ChartTimeframe } from '~~/types/dashboard';
 
 const props = defineProps({
   modelValue: { type: String as PropType<ChartTimeframe | null>, default: null },

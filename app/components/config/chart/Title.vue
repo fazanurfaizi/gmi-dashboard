@@ -1,13 +1,13 @@
 <template>
   <div class="row q-col-gutter-sm items-center">
     <div class="col-grow col-12">
-      <f-input v-model.number="model.fontsize" label="Font Size (px)" type="number" placeholder="Auto" />
+      <q-input v-model.number="model.fontsize" label="Font Size (px)" type="number" placeholder="Auto" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { TitleConfig } from '~/utils/gridstack'
+import type { TitleConfig } from '~~/types/dashboard';
 
 const props = defineProps<{ modelValue: TitleConfig | null | undefined }>()
 const emit = defineEmits(['update:modelValue'])

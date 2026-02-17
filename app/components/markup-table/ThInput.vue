@@ -7,5 +7,5 @@
 <script setup lang="ts"></script>
 
 <style lang="scss" scoped>
-@import 'src/services/composables/resizableTh.scss';
+@import '~/assets/scss/resizableTh.scss';
 </style>

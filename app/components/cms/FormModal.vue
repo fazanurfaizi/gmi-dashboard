@@ -1,7 +1,6 @@
 <template>
   <div>
-    <s-loading v-if="loading" />
-    <h-form v-else @submit="submit" :meta="props.meta" :modal="props.data" @back="back">
+    <q-form v-if="!loading" @submit="submit" :meta="props.meta" :modal="props.data" @back="back">
       <div class="row">
         <Card title="General Info" col="6">
           <q-input v-model="dataModel.code" label="Code" readonly />
@@ -32,10 +31,12 @@
               </q-btn-dropdown>
             </div>
           </q-card>
-          <div ref="gridContainer" class="grid-stack"></div>
+          <client-only>
+            <div ref="gridContainer" class="grid-stack"></div>
+          </client-only>
         </div>
       </div>
-    </h-form>
+    </q-form>
 
     <q-dialog v-model="preview" maximized :persistent="false" full-height>
       <q-card>
@@ -57,7 +58,7 @@
         <q-card-section v-if="currentWidget">
           <FormTable v-if="currentWidget.type == 'table'" v-model="currentWidget"
             @submit="updateWidget" />
-          <FormChart v-else-if="currentWidget.type == 'combine_chart'" v-model="currentWidget"
+          <FormChart v-else v-model="currentWidget"
             @submit="updateWidget" />
         </q-card-section>
       </q-card>
@@ -68,7 +69,7 @@
 <script setup lang="ts">
 import { useApi } from '~/composables/useApi'
 import { useAlert } from '~/composables/useAlert'
-import type { Dashboard, TemplateOption, WidgetData } from '~~/types/dashboard'
+import type { Dashboard, WidgetData } from '~~/types/dashboard'
 import { initGrid, addWidget, getWidget, updateWidgetContent, removeWidget, removeAllWidget, getLayout } from '~/utils/gridstack'
 import { types as optDateTypes } from '~/utils/dateHelper'
 
@@ -82,6 +83,7 @@ const router = useRouter()
 const route = useRoute()
 const $api = useApi()
 const $alert = useAlert()
+const $q = useQuasar()
 
 const dialog = ref<any>({
   show: false,
@@ -126,16 +128,22 @@ const widgetOptions = [
 ]
 
 const init = () => {
+  widgets.value = []
+
   dataModel.value = unreactive({
     ...props.meta.model,
-    config: { companyFilter: { show: false, codes: [] } },
   })
+
   const routeId = Array.isArray(route.params?.id) ? route.params.id[0] : (route.params?.id ?? null)
   const id = props?.data?.id ?? routeId
-  if (id) getData(id)
-  else {
+
+  if (id) {
+    getData(id)
+  } else {
     loading.value = false
-    nextTick(() => { if (gridContainer.value) initGrid(gridContainer.value) })
+    nextTick(() => { 
+      if (gridContainer.value) initGrid(gridContainer.value) 
+    })
   }
 }
 
@@ -150,13 +158,18 @@ const getData = async (id: string | number) => {
       nextTick(() => {
         if (gridContainer.value) {
           initGrid(gridContainer.value)
-          if (data.templates && Array.isArray(data.templates) && data.templates.length > 0) loadSavedWidgets(data.templates)
+
+          if (data.templates && Array.isArray(data.templates) && data.templates.length > 0) 
+            loadSavedWidgets(data.templates)
         }
       })
     }
   } catch (e) {
     loading.value = false
     console.error(e)
+    nextTick(() => {
+      if (gridContainer.value) initGrid(gridContainer.value) 
+    })
   }
 }
 
@@ -282,11 +295,24 @@ function getIcon(type: string) {
   return map[type] || 'widgets'
 }
 
+watch(
+  () => loading,
+  () => {
+    if (loading.value) $q.loading.show()
+  }
+)
+
 onMounted(async () => {
-  init()
-  if (typeof window === 'undefined') return
-  if (!window.Plotly) { const mod = await import('plotly.js-dist-min'); window.Plotly = mod.default }
+  if (process.server) return
+
+  if (!window.Plotly) {
+    const mod = await import('plotly.js-dist-min')
+    window.Plotly = mod.default
+  }
+
   Object.assign(window, { editWidget, updateWidget, removeWidget })
-  if (gridContainer.value) initGrid(gridContainer.value)
+
+  init()
 })
+
 </script>

@@ -1,6 +1,5 @@
 <!-- <template>
   <div>
-    <s-loading v-if="loading" />
     <h-detail v-else :meta="Meta" :modal="props.data" @back="back" :model="dataModel">
       <div class="row q-pa-sm">
         <f-card title="Detail" col="6">
