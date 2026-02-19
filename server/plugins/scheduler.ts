@@ -19,7 +19,7 @@ export default defineNitroPlugin((nitroApp) => {
         await syncSheets(db, spreadsheetId)
     }, 30 * 60 * 1000)
 
-    syncSheets(db, spreadsheetId)
+    // syncSheets(db, spreadsheetId)
 })
 
 async function syncSheets(db: Db, spreadsheetId: string) {

@@ -1,107 +1,89 @@
-{
-type: written_file
-fileName: app/components/form/Chart.vue
-fullContent:
 <template>
   <q-card flat class="bg-transparent">
-    <q-form @submit="updateData()">
-      
+    <q-form @submit="submit">
       <div class="row justify-between items-center q-mb-md">
-        <div class="text-h6 text-weight-bold text-grey-8">Chart Configuration</div>
+        <div class="text-h6 text-weight-bold text-grey-8">Database Widget Configuration</div>
         <div class="row q-gutter-sm">
           <q-btn label="Cancel" flat v-close-popup color="grey-7" />
           <q-btn type="submit" color="primary" icon="save" label="Update Widget" unelevated />
         </div>
       </div>
 
-      <div class="row q-col-gutter-md">
+      <div class="row q-col-gutter-md q-mb-md">
         <div class="col-12">
           <q-card bordered flat>
             <q-card-section>
               <div class="text-subtitle2 text-weight-bold text-grey-7 q-mb-sm">General & Data Source</div>
-              
               <div class="row q-col-gutter-md">
-                <div class="col-12">
-                  <q-input v-model="dataModel.title" label="Widget Title" outlined dense placeholder="Enter chart title..." />
+                <div class="col-12 col-md-6">
+                  <q-input v-model="dataModel.title" label="Widget Title" outlined dense />
                 </div>
 
                 <div class="col-12 col-md-6">
-                  <template v-if="!loading">
-                    <q-input 
-                      v-model="dataModel.config.spreadsheetId" 
-                      label="Spreadsheet ID"                       
-                      outlined dense
-                    />
-                  </template>
-                  <q-skeleton v-else type="QInput" />
+                  <q-select v-model="dataModel.type" label="Widget Type" :options="widgetTypeOptions" emit-value
+                    map-options outlined dense />
                 </div>
 
-                <div class="col-12 col-md-6">
-                  <template v-if="!loading">
-                    <q-input 
-                      v-model="dataModel.config.sheetName" 
-                      label="Sheet Name" 
-                      @update:modelValue="getColumns()" 
-                      outlined dense
-                    />
-                  </template>
-                  <q-skeleton v-else type="QInput" />
-                </div>                
+                <div class="col-12 col-md-8">
+                  <q-select v-model="dataModel.config.dataSource" label="Data Source Table" :options="[
+                    { label: 'Procurements (Pengadaan)', value: 'procurements' },
+                    { label: 'Installations (Jasa Instalasi)', value: 'installations' }
+                  ]" emit-value map-options outlined dense @update:model-value="loadTableSchema" />
+                </div>
+                <div class="col-12 col-md-4 flex flex-center">
+                  <q-btn label="Load Columns" color="secondary" icon="view_column" unelevated class="full-width"
+                    @click="loadTableSchema" :disable="!dataModel.config.dataSource" />
+                </div>
               </div>
             </q-card-section>
           </q-card>
         </div>
+      </div>
 
+      <div class="row q-col-gutter-md">
         <div class="col-12">
           <q-card bordered flat>
-            <q-tabs
-              v-model="tab"
-              dense
-              class="text-grey"
-              active-color="primary"
-              indicator-color="primary"
-              align="justify"
-              narrow-indicator
-            >
+            <q-tabs v-model="tab" dense class="text-grey" active-color="primary" indicator-color="primary"
+              align="justify" narrow-indicator>
               <q-tab name="columns" icon="view_column" label="Columns" />
               <q-tab name="query" icon="filter_alt" label="Query / Filter" />
-              <q-tab name="chart" icon="insert_chart" label="Chart Settings" />
+              <q-tab v-if="!isTable" name="chart" icon="insert_chart" label="Chart Settings" />
+              <q-tab v-if="!isTable" name="style" icon="palette" label="Styles" />
             </q-tabs>
 
             <q-separator />
 
             <q-tab-panels v-model="tab" animated class="q-pa-none">
-              
               <q-tab-panel name="columns" class="q-pa-none">
                 <div class="q-pa-md">
-                  <div class="row items-center justify-between q-mb-sm">
-                    <div class="text-subtitle2">Selected Columns</div>
-                  </div>
-
                   <q-markup-table flat bordered dense wrap-cells separator="cell">
                     <thead class="bg-grey-1">
                       <tr>
-                        <MarkupTableThInput>Action</MarkupTableThInput>
-                        <MarkupTableThInput>ID</MarkupTableThInput>
+                        <th style="width: 50px">Action</th>
+                        <MarkupTableThInput>Field ID</MarkupTableThInput>
                         <MarkupTableThInput>Label</MarkupTableThInput>
                         <MarkupTableThInput>Format</MarkupTableThInput>
                         <MarkupTableThInput>Precision</MarkupTableThInput>
                         <MarkupTableThInput>Aggregation</MarkupTableThInput>
-                        <MarkupTableThInput>Filter Date</MarkupTableThInput>
                       </tr>
                     </thead>
                     <tbody>
+                      <tr v-if="dataModel.config.columns.length === 0">
+                        <td colspan="6" class="text-center text-grey-6 q-pa-md">No columns selected. Please add from the
+                          available columns below.</td>
+                      </tr>
                       <tr v-for="(v, i) in dataModel.config.columns" :key="i">
-                        <td class="text-center" style="width: 50px">
-                          <q-btn flat dense round color="negative" icon="delete" size="sm" @click="delColumn(v, i)" />
+                        <td class="text-center">
+                          <q-btn flat dense round color="negative" icon="delete" size="sm" @click="delColumn(i)" />
                         </td>
-                        <td class="bg-grey-1 text-grey-7">{{ v.id = v.id || `${v.name}${i}` }}</td>
-                        <MarkupTableTdInput :i="i" v-model="v.label" type="input" dense borderless />
-                        <MarkupTableTdInput :i="i" v-model="v.format" type="select" :options="optFormat" dense borderless />
-                        <MarkupTableTdInput v-if="v.format == 'number'" :i="i" v-model="v.precision" type="number" :precision="0" dense borderless />
+                        <td class="bg-grey-1 text-grey-7">{{ v.name }}</td>
+                        <MarkupTableTdInput :i="i" v-model="v.label" />
+                        <MarkupTableTdInput :i="i" v-model="v.format" type="select" :options="optFormat" />
+                        <MarkupTableTdInput v-if="v.format === 'number'" :i="i" v-model="v.precision" type="number"
+                          :precision="0" />
                         <td v-else class="bg-grey-2"></td>
-                        <MarkupTableTdInput v-if="v.format" :i="i" v-model="v.aggregation" type="select" :options="optAggregation[v.format]" dense borderless />
-                        <MarkupTableTdInput v-if="['date', 'datetime'].includes(v.format)" :i="i" v-model="v.datefilter" type="checkbox" dense borderless />
+                        <MarkupTableTdInput v-if="v.format" :i="i" v-model="v.aggregation" type="select"
+                          :options="optAggregation[v.format]" />
                         <td v-else class="bg-grey-2"></td>
                       </tr>
                     </tbody>
@@ -111,35 +93,32 @@ fullContent:
                 <q-separator />
 
                 <div class="q-pa-md">
-                  <div class="row items-center justify-between q-mb-sm">
-                    <div class="text-subtitle2">Preview Source Data</div>
-                    <q-btn flat dense icon="refresh" label="Refresh Schema" size="sm" color="primary" @click="getColumns()" />
-                  </div>
-                  
-                  <div class="scroll" style="max-height: 300px">
+                  <div class="text-subtitle2 q-mb-xs">Available Columns (From Selected Table)</div>
+                  <div class="scroll" style="max-height: 250px">
                     <q-markup-table flat bordered dense separator="cell">
                       <thead class="bg-grey-1">
                         <tr>
                           <th v-for="col in rawData.cols" :key="col.name" class="text-left">
                             <div class="row items-center no-wrap">
                               <span>{{ col.name }}</span>
-                              <q-btn flat dense round icon="add_circle" color="positive" size="xs" class="q-ml-xs" @click="addColumn(col)">
+                              <q-btn flat dense round icon="add_circle" color="positive" size="xs" class="q-ml-xs"
+                                @click="addColumn(col)">
                                 <q-tooltip>Add to Columns</q-tooltip>
                               </q-btn>
                             </div>
                           </th>
                         </tr>
                       </thead>
-                      <tbody v-if="loadColumns">
-                        <tr>
-                          <td :colspan="rawData.cols?.length || 1" class="text-center q-pa-md">
-                            <q-spinner color="primary" size="2em" />
-                          </td>
+
+                      <tbody>
+                        <tr v-if="rawData.cols.length === 0">
+                          <td class="text-center text-grey-6 q-pa-md">Please select a table and load columns.</td>
                         </tr>
-                      </tbody>
-                      <tbody v-else>
-                        <tr v-for="(r, idx) in rawData.rows" :key="idx">
-                          <td v-for="col in rawData.cols" :key="col.name">{{ r[col.id] }}</td>
+
+                        <tr v-else>
+                          <td v-for="col in rawData.cols" :key="col.name" class="text-grey-7 text-caption">
+                            Type: {{ col.format }}
+                          </td>
                         </tr>
                       </tbody>
                     </q-markup-table>
@@ -150,103 +129,62 @@ fullContent:
               <q-tab-panel name="query">
                 <div class="row q-col-gutter-md q-mb-md">
                   <div class="col-12 col-md-6">
-                    <q-input v-model="dataModel.config.query.limit" label="Limit Results" outlined dense type="number" hint="Set 0 to view All" />
+                    <q-input v-model.number="dataModel.config.query.limit" label="Limit Results" outlined dense
+                      type="number" />
                   </div>
+
                   <div class="col-12 col-md-6">
-                    <q-input v-model="dataModel.config.query.order" label="Order By" outlined dense placeholder="e.g., name:ASC" />
+                    <q-input v-model="dataModel.config.query.order" label="Order By (e.g. date:DESC)" outlined dense />
                   </div>
                 </div>
-                
+
                 <q-separator class="q-my-md" />
-                
-                <ConfigChartQueryFilter 
-                  v-model="dataModel.config.query.filters" 
-                  :columns="rawData.cols" 
-                  :operator-options="opt.queries" 
-                />
+
+                <ConfigChartQueryFilter v-model="dataModel.config.query.filters" :columns="rawData.cols" />
+
               </q-tab-panel>
 
-              <q-tab-panel name="chart">
-                <div class="q-mb-md">
-                  <q-select 
-                    v-model="dataModel.config.chart.type" 
-                    label="Chart Type" 
-                    :options="['combine', 'scatter', 'line', 'column', 'bar', 'area', 'pie', 'donut', 'waterfall', 'sparkline']" 
-                    outlined dense options-dense 
-                  />
-                </div>
-
-                <template v-if="isSpecializedChart">
-                   <ConfigWidgetCombineChart 
-                      v-if="dataModel.config.chart.type === 'combine'" 
-                      v-model="dataModel.config.chart" 
-                      :columns="columnOptions" 
-                   />
-                   <ConfigWidgetBarChart 
-                      v-else-if="['bar', 'column'].includes(dataModel.config.chart.type)" 
-                      v-model="dataModel.config.chart" 
-                      :columns="columnOptions" 
-                   />
-                   <ConfigWidgetAreaChart 
-                      v-else-if="dataModel.config.chart.type === 'area'" 
-                      v-model="dataModel.config.chart" 
-                      :columns="columnOptions" 
-                   />
-                   <ConfigWidgetDonutChart 
-                      v-else-if="['pie', 'donut'].includes(dataModel.config.chart.type)" 
-                      v-model="dataModel.config.chart" 
-                      :columns="columnOptions" 
-                   />
-                   <ConfigWidgetWaterfallChart 
-                      v-else-if="dataModel.config.chart.type === 'waterfall'" 
-                      v-model="dataModel.config.chart" 
-                      :columns="columnOptions" 
-                   />
-                   <ConfigWidgetSparklineChart 
-                      v-else-if="dataModel.config.chart.type === 'sparkline'" 
-                      v-model="dataModel.config.chart" 
-                      :columns="columnOptions" 
-                   />
-                </template>
-
-                <div v-else>
-                  <div class="row q-col-gutter-md q-mb-lg">
-                    <div class="col-12 col-md-4" v-if="dataModel.config.chart.type !== 'pie'">
-                      <q-select 
-                        v-model="dataModel.config.chart.x" 
-                        label="X Axis Source" 
-                        :options="dataModel.config.columns" 
-                        :optionLabel="(v: any) => `${v.label} (${v.id})`" 
-                        option-value="id" 
-                        outlined dense options-dense emit-value map-options
-                      />
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <q-select 
-                        v-model="dataModel.config.chart.legend" 
-                        label="Legend Source" 
-                        :options="dataModel.config.columns" 
-                        :optionLabel="(v: any) => `${v.label} (${v.id})`" 
-                        option-value="id" 
-                        outlined dense options-dense emit-value map-options
-                      />
-                    </div>
+              <q-tab-panel name="chart" v-if="!isTable">
+                <div class="row q-col-gutter-md q-mb-lg">
+                  <div class="col-12 col-md-6">
+                    <q-select v-model="dataModel.config.chart.x" label="X-Axis / Category Field"
+                      :options="dataModel.config.columns" :optionLabel="(v) => v.label || v.name" option-value="name"
+                      outlined dense map-options emit-value />
                   </div>
 
+                  <div class="col-12 col-md-6" v-if="isDonut">
+                    <q-select v-model="donutValueField" label="Value Field" :options="dataModel.config.columns"
+                      :optionLabel="(v) => v.label || v.name" option-value="name" outlined dense map-options
+                      emit-value />
+                  </div>
+
+                  <div class="col-12 col-md-6" v-if="!isDonut && !isSparkline">
+                    <q-select v-model="dataModel.config.chart.legend" label="Legend / Grouping Field"
+                      :options="dataModel.config.columns" :optionLabel="(v) => v.label || v.name" option-value="name"
+                      outlined dense map-options emit-value clearable />
+                  </div>
+                </div>
+
+                <div v-if="!isDonut">
                   <div class="text-subtitle2 q-mb-sm row justify-between items-center">
-                    <span>Series Configuration</span>
-                    <q-btn flat dense icon="add" label="Add Series" color="primary" size="sm" @click="addSeries()" />
+                    <span>Series Configuration (Y-Axis)</span>
+                    <q-btn flat dense icon="add" label="Add Series" color="primary" size="sm" @click="addSeries" />
                   </div>
 
                   <q-markup-table flat bordered dense wrap-cells separator="cell">
                     <thead class="bg-grey-1">
                       <tr>
-                        <th style="width: 50px">Action</th>
-                        <MarkupTableThInput>Field</MarkupTableThInput>
-                        <MarkupTableThInput>Axis</MarkupTableThInput>
-                        <MarkupTableThInput>Type</MarkupTableThInput>
-                        <MarkupTableThInput>Mode</MarkupTableThInput>
-                        <MarkupTableThInput>Fill</MarkupTableThInput>
+                        <th style="width: 50px"></th>
+                        <MarkupTableThInput>Field (Y-Axis)</MarkupTableThInput>
+                        <template v-if="isCombine">
+                          <MarkupTableThInput>Axis</MarkupTableThInput>
+                          <MarkupTableThInput>Type</MarkupTableThInput>
+                          <MarkupTableThInput>Mode</MarkupTableThInput>
+                        </template>
+
+                        <template v-if="isWaterfall">
+                          <MarkupTableThInput>Type (Relative/Total)</MarkupTableThInput>
+                        </template>
                       </tr>
                     </thead>
                     <tbody>
@@ -254,19 +192,29 @@ fullContent:
                         <td class="text-center">
                           <q-btn flat dense round color="negative" icon="delete" size="sm" @click="delSeries(i)" />
                         </td>
-                        <MarkupTableTdInput :i="i" v-model="v.field" type="select" :options="dataModel.config.columns" :optionLabel="(v: any) => `${v.label} (${v.id})`" option-value="id" dense borderless />
-                        <MarkupTableTdInput :i="i" v-model="v.axis" type="select" :options="['y', 'y2']" dense borderless />
-                        <MarkupTableTdInput :i="i" v-model="v.type" type="select" :options="['auto', 'scatter', 'line', 'column', 'area']" dense borderless />
-                        <MarkupTableTdInput v-if="v.type !== 'column'" :i="i" v-model="v.mode" type="select" :options="['lines', 'markers', 'text', 'lines+markers', 'lines+text', 'markers+text', 'lines+markers+text']" dense borderless />
-                        <td v-else class="bg-grey-2" />
-                        <MarkupTableTdInput v-if="v.type === 'area'" :i="i" v-model="v.fill" type="select" :options="['none', 'tozeroy', 'tonexty']" dense borderless />
-                        <td v-else class="bg-grey-2" />
+                        <MarkupTableTdInput :i="i" v-model="v.field" type="select" :options="dataModel.config.columns"
+                          :optionLabel="(col: any) => col.label || col.name" option-value="name" />
+                        <template v-if="isCombine">
+                          <MarkupTableTdInput :i="i" v-model="v.axis" type="select" :options="['y', 'y2']" />
+                          <MarkupTableTdInput :i="i" v-model="v.type" type="select"
+                            :options="['column', 'line', 'area', 'scatter']" />
+                          <MarkupTableTdInput v-if="v.type !== 'column'" :i="i" v-model="v.mode" type="select"
+                            :options="['lines', 'lines+markers', 'markers']" />
+                          <td v-else class="bg-grey-2" />
+                        </template>
+
+                        <template v-if="isWaterfall">
+                          <MarkupTableTdInput :i="i" v-model="v.mode" type="select" :options="['relative', 'total']" />
+                        </template>
                       </tr>
                     </tbody>
                   </q-markup-table>
                 </div>
               </q-tab-panel>
 
+              <q-tab-panel name="style" v-if="!isTable">
+                <ConfigChartStyle v-model="dataModel.config.chartStyles" />
+              </q-tab-panel>
             </q-tab-panels>
           </q-card>
         </div>
@@ -275,9 +223,9 @@ fullContent:
   </q-card>
 </template>
 
+
 <script setup lang="ts">
-import { Meta } from '~/utils/meta'
-import type { WidgetData } from '~~/types/dashboard';
+import type { WidgetData } from '~~/types/dashboard'
 
 useResizableTh()
 useRowKeyboardMove()
@@ -285,132 +233,142 @@ useRowKeyboardMove()
 const props = defineProps<{ modelValue: WidgetData }>()
 const emit = defineEmits(['update:modelValue', 'submit'])
 
-const $api = useApi()
-const loading = ref(true)
-const loadColumns = ref(false)
 const tab = ref('columns')
-const tabs = ['columns', 'query', 'chart']
-const dataModel = ref<WidgetData>(props.modelValue)
-const rawData = ref<any>({ cols: [], rows: [] })
-const opt = ref<{ modules: any; queries: { text: any; nontext: any } }>({ modules: [], queries: { text: [], nontext: [] } })
-const optFormat = ['number', 'date', 'datetime', 'text']
-const optAggregation: any = { number: ['', 'count', 'sum', 'avg', 'min', 'max'], date: ['', 'count', 'min', 'max'], datetime: ['', 'count', 'min', 'max'], text: ['', 'count'] }
 
-// Computed to check if we use a specialized component or the generic one
-const isSpecializedChart = computed(() => {
-  const t = dataModel.value.config?.chart?.type;
-  return ['combine', 'bar', 'column', 'area', 'pie', 'donut', 'waterfall', 'sparkline'].includes(t);
+const dataModel = ref<WidgetData>(JSON.parse(JSON.stringify(props.modelValue)))
+
+if (!dataModel.value.config) dataModel.value.config = { query: { filters: [] }, columns: [], chart: { series: [] } } as any
+if (!dataModel.value.config.query) dataModel.value.config.query = { limit: 0, order: '', filters: [] }
+if (!dataModel.value.config.chart) dataModel.value.config.chart = { type: 'column', series: [], x: null, legend: null }
+if (!dataModel.value.config.chart.series) dataModel.value.config.chart.series = []
+if (!dataModel.value.config.columns) dataModel.value.config.columns = []
+
+
+const widgetTypeOptions = [
+  { label: 'Combine Chart (Bar/Line/Area)', value: 'combine_chart' },
+  { label: 'Donut Chart', value: 'donut_chart' },
+  { label: 'Waterfall Chart', value: 'waterfall_chart' },
+  { label: 'Sparkline', value: 'sparkline_chart' },
+  { label: 'Table', value: 'inventory' }
+]
+
+const isTable = computed(() => dataModel.value.type === 'inventory' || dataModel.value.type === 'table')
+const isCombine = computed(() => ['combine_chart', 'bar_chart', 'area_chart'].includes(dataModel.value.type))
+const isWaterfall = computed(() => dataModel.value.type === 'waterfall_chart')
+const isDonut = computed(() => dataModel.value.type === 'donut_chart')
+const isSparkline = computed(() => dataModel.value.type === 'sparkline_chart')
+
+const tableSchemas: Record<string, { name: string, format: string }[]> = {
+  procurements: [
+    { name: 'id', format: 'number' },
+    { name: 'year', format: 'number' },
+    { name: 'status', format: 'text' },
+    { name: 'no', format: 'number' },
+    { name: 'projectCode', format: 'text' },
+    { name: 'projectName', format: 'text' },
+    { name: 'location', format: 'text' },
+    { name: 'pm', format: 'text' },
+    { name: 'admin', format: 'text' },
+    { name: 'epc', format: 'text' },
+    { name: 'notes', format: 'text' },
+    { name: 'syncedAt', format: 'datetime' }
+  ],
+  installations: [
+    { name: 'id', format: 'number' },
+    { name: 'year', format: 'number' },
+    { name: 'status', format: 'text' },
+    { name: 'no', format: 'number' },
+    { name: 'note', format: 'text' },
+    { name: 'weeklyMeeting', format: 'text' },
+    { name: 'projectCode', format: 'text' },
+    { name: 'projectName', format: 'text' },
+    { name: 'location', format: 'text' },
+    { name: 'capacity', format: 'number' },
+    { name: 'unit', format: 'text' },
+    { name: 'pm', format: 'text' },
+    { name: 'admin', format: 'text' },
+    { name: 'sm', format: 'text' },
+    { name: 'manpowerUpdate', format: 'text' },
+    { name: 'epc', format: 'text' },
+    { name: 'developer', format: 'text' },
+    { name: 'roofType', format: 'text' },
+    { name: 'progressData', format: 'text' }, // JSON
+    { name: 'syncedAt', format: 'datetime' }
+  ]
+}
+
+const rawData = ref<{ cols: any[] }>({ cols: [] })
+
+const optFormat = ['text', 'number', 'date', 'datetime']
+
+const optAggregation: Record<string, string[]> = {
+  number: ['', 'sum', 'avg', 'min', 'max', 'count'],
+  date: ['', 'min', 'max', 'count'],
+  datetime: ['', 'min', 'max', 'count'],
+  text: ['', 'count']
+}
+
+const loadTableSchema = () => {
+  const selectedTable = dataModel.value.config.dataSource as string;
+  if (!selectedTable || !tableSchemas[selectedTable]) return;
+  rawData.value = { cols: tableSchemas[selectedTable] }
+}
+
+const donutValueField = computed({
+  get: () => dataModel.value.config?.chart?.series?.[0]?.field || null,
+  set: (val) => {
+    if (!dataModel.value.config.chart.series) {
+      dataModel.value.config.chart.series = [];
+
+    }
+
+    if (!dataModel.value.config.chart.series[0]) {
+      dataModel.value.config.chart.series[0] = { field: val, axis: 'y', type: 'auto', mode: 'lines' };
+    } else {
+      dataModel.value.config.chart.series[0].field = val;
+    }
+  }
 });
 
-// Map columns objects to simple strings for the specialized widgets
-const columnOptions = computed(() => {
-  return dataModel.value.config.columns?.map(c => c.id || c.name) || [];
-});
-
-const getOpt = async (ep: string) => {
-  try {
-    const res: any = await $api.get(ep)
-    if (res && res.status === 200) {
-      opt.value = res.data || res
-    }
-  } catch (e) {
-    console.error('Failed to get options', e)
+onMounted(() => {
+  if (dataModel.value.config.dataSource) {
+    loadTableSchema()
   }
+})
+
+const addColumn = (col: any) => {
+  if (dataModel.value.config.columns.find((c: any) => c.name === col.name)) return;
+
+  dataModel.value.config.columns.push({
+    id: col.name,
+    name: col.name,
+    label: col.name,
+    format: col.format,
+    precision: col.format === 'number' ? 0 : null,
+    aggregation: null,
+    datefilter: false
+  })
 }
 
-const getColumns = async () => {
-  // Use config.spreadsheetId if available (Sheet mode), otherwise fallback to app/endpoint (Legacy/API mode)
-  const isSheet = !!dataModel.value?.config.spreadsheetId;
-  
-  if (isSheet) {
-    // Logic for Google Sheets fetching
-    const { spreadsheetId, sheetName } = dataModel.value.config
-    if (!spreadsheetId) return
-    loadColumns.value = true
-    try {
-      // Use the sheet API
-      const res: any = await $api.get('/api/sheet')
-      loadColumns.value = false
-      const d = res.data || res
-      if (Array.isArray(d) && d.length > 0) {
-        const cols = []
-        const row = d[0]
-        for (const key of Object.keys(row)) {
-          cols.push({ id: key, name: key, format: getFormat(row[key]) })
-        }
-        rawData.value.cols = cols
-        rawData.value.rows = d
-      }
-    } catch (e) {
-      loadColumns.value = false
-      console.error('Failed to get sheet columns', e)
-    }
-    return;
-  }
-
-  // Legacy/API Mode
-  const app = dataModel.value?.config.app
-  const ep = dataModel.value?.config.endpoint
-  if (!app || !ep) return
-  loadColumns.value = true
-  
-  try {
-    const res: any = await $api.get(`${ep}?limit=5`)
-    loadColumns.value = false
-    const d = res.data || res 
-    if (d && Array.isArray(d) && d.length > 0) {
-      const cols = []
-      const row = d[0]
-      for (const key of Object.keys(row)) {
-        if (!key) continue
-        cols.push({ id: key, name: key, format: getFormat(row[key]) })
-      }
-      rawData.value.cols = cols
-      rawData.value.rows = d
-    }
-  } catch (e) {
-    loadColumns.value = false
-    console.error('Failed to get columns', e)
-  }
-}
-
-const addColumn = (v: any) => {
-  if (!dataModel.value.config.columns) dataModel.value.config.columns = []
-  dataModel.value.config.columns.push({ id: v.id || v.name, name: v.name, label: v.name, format: v.format, precision: null, aggregation: null, datefilter: false })
-}
-
-const delColumn = (_v: any, i: number) => { if (dataModel.value.config.columns) dataModel.value.config.columns.splice(i, 1) }
+const delColumn = (i: number) => dataModel.value.config.columns.splice(i, 1)
 
 const addSeries = () => {
-  if (!dataModel.value.config?.chart?.series) dataModel.value.config.chart.series = []
-  dataModel.value.config.chart.series.push({ field: null, axis: 'y', type: 'auto' })
+  dataModel.value.config.chart.series.push({
+    field: null,
+    axis: 'y',
+    type: isCombine.value ? 'column' : 'auto',
+    mode: 'lines'
+  })
 }
 
-const delSeries = (i: number) => { if (dataModel.value.config?.chart?.series) dataModel.value.config.chart.series.splice(i, 1) }
+const delSeries = (i: number) => dataModel.value.config.chart.series.splice(i, 1)
 
-const updateData = () => {
+const submit = () => {
+  if (isDonut.value) dataModel.value.config.chart.type = 'pie'
+  else if (isCombine.value) dataModel.value.config.chart.type = 'column'
+
   emit('update:modelValue', dataModel.value)
   emit('submit', dataModel.value)
 }
 
-const getFormat = (val: any): string => {
-  if (val === null || val === undefined) return 'text'
-  if (typeof val === 'number') return 'number'
-  if (val instanceof Date) return 'datetime'
-  if (typeof val === 'string') {
-    if (!isNaN(Date.parse(val)) && val.includes('T')) return 'datetime'
-    if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return 'date'
-    if (!isNaN(Number(val))) return 'number'
-  }
-  return 'text'
-}
-
-onMounted(async () => {
-  // await getOpt(`${Meta.module}?opt=true`)
-  if (dataModel.value.config.spreadsheetId || dataModel.value.config.endpoint) {
-    getColumns()
-  }
-  loading.value = false
-})
 </script>
-}

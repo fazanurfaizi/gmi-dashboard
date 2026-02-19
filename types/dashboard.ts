@@ -162,6 +162,7 @@ export interface WidgetData {
     config: {
         spreadsheetId?: string | null
         sheetName?: string | null
+        dataSource?: string | null
         app: string | null
         endpoint: string | null
         query: {

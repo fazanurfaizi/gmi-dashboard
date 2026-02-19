@@ -1,13 +1,13 @@
 <template>
   <td :data-row-index="i" :class="type == 'checkbox' ? `text-center ${props.class}` : props.class">
     <!-- TEXT INPUT -->
-    <f-input-table v-if="type === 'input'" :modelValue="modelValue" @update:modelValue="emitValue" />
+    <form-table-input v-if="type === 'input'" :modelValue="modelValue" @update:modelValue="emitValue" />
 
     <!-- NUMBER INPUT -->
-    <f-number-table v-else-if="type === 'number'" :modelValue="modelValue" :precision="props.precision" @update:modelValue="emitValue" />
+    <form-table-number v-else-if="type === 'number'" :modelValue="modelValue" :precision="props.precision" @update:modelValue="emitValue" />
 
     <!-- SELECT -->
-    <f-select-table v-else-if="type === 'select'" :modelValue="modelValue" :options="props.options" :optionValue="optionValue" :optionLabel="optionLabel" @update:modelValue="emitValue" />
+    <form-table-select v-else-if="type === 'select'" :modelValue="modelValue" :options="props.options" :optionValue="optionValue" :optionLabel="optionLabel" @update:modelValue="emitValue" />
 
     <!-- CHECKBOX -->
     <q-checkbox v-else-if="type === 'checkbox'" :modelValue="modelValue" dense @update:modelValue="emitValue" />

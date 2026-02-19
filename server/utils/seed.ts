@@ -20,8 +20,6 @@ export function syncProcurementData(db: Db, data: any[], year: number) {
 
     if (records.length === 0) return
 
-    console.log(records.slice(4))
-
     db.transaction((tx: Tx) => {
         tx.delete(procurements).where(eq(procurements.year, year)).run()
         tx.insert(procurements).values(records).run()
