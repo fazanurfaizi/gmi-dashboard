@@ -215,45 +215,6 @@ const isWaterfall = computed(() => dataModel.value.type === 'waterfall_chart')
 const isDonut = computed(() => dataModel.value.type === 'donut_chart')
 const isSparkline = computed(() => dataModel.value.type === 'sparkline_chart')
 
-const tableSchemas: Record<string, { name: string, format: string }[]> = {
-  procurements: [
-    { name: 'id', format: 'number' },
-    { name: 'year', format: 'number' },
-    { name: 'status', format: 'text' },
-    { name: 'no', format: 'number' },
-    { name: 'projectCode', format: 'text' },
-    { name: 'projectName', format: 'text' },
-    { name: 'location', format: 'text' },
-    { name: 'pm', format: 'text' },
-    { name: 'admin', format: 'text' },
-    { name: 'epc', format: 'text' },
-    { name: 'notes', format: 'text' },
-    { name: 'syncedAt', format: 'datetime' }
-  ],
-  installations: [
-    { name: 'id', format: 'number' },
-    { name: 'year', format: 'number' },
-    { name: 'status', format: 'text' },
-    { name: 'no', format: 'number' },
-    { name: 'note', format: 'text' },
-    { name: 'weeklyMeeting', format: 'text' },
-    { name: 'projectCode', format: 'text' },
-    { name: 'projectName', format: 'text' },
-    { name: 'location', format: 'text' },
-    { name: 'capacity', format: 'number' },
-    { name: 'unit', format: 'text' },
-    { name: 'pm', format: 'text' },
-    { name: 'admin', format: 'text' },
-    { name: 'sm', format: 'text' },
-    { name: 'manpowerUpdate', format: 'text' },
-    { name: 'epc', format: 'text' },
-    { name: 'developer', format: 'text' },
-    { name: 'roofType', format: 'text' },
-    { name: 'progressData', format: 'text' }, // JSON
-    { name: 'syncedAt', format: 'datetime' }
-  ]
-}
-
 const rawData = ref<{ cols: any[] }>({ cols: [] })
 
 const optFormat = ['text', 'number', 'date', 'datetime']
@@ -267,25 +228,9 @@ const optAggregation: Record<string, string[]> = {
 
 const loadTableSchema = () => {
   const selectedTable = dataModel.value.config.dataSource as string;
-  if (!selectedTable || !tableSchemas[selectedTable]) return;
-  rawData.value = { cols: tableSchemas[selectedTable] }
+  if (!selectedTable || !TABLE_SCHEMAS[selectedTable]) return;
+  rawData.value = { cols: TABLE_SCHEMAS[selectedTable] }
 }
-
-const donutValueField = computed({
-  get: () => dataModel.value.config?.chart?.series?.[0]?.field || null,
-  set: (val) => {
-    if (!dataModel.value.config.chart.series) {
-      dataModel.value.config.chart.series = [];
-
-    }
-
-    if (!dataModel.value.config.chart.series[0]) {
-      dataModel.value.config.chart.series[0] = { field: val, axis: 'y', type: 'auto', mode: 'lines' };
-    } else {
-      dataModel.value.config.chart.series[0].field = val;
-    }
-  }
-});
 
 onMounted(() => {
   if (dataModel.value.config.dataSource) {
@@ -308,17 +253,6 @@ const addColumn = (col: any) => {
 }
 
 const delColumn = (i: number) => dataModel.value.config.columns.splice(i, 1)
-
-const addSeries = () => {
-  dataModel.value.config.chart.series.push({
-    field: null,
-    axis: 'y',
-    type: isBasic.value ? 'column' : 'auto',
-    mode: 'lines'
-  })
-}
-
-const delSeries = (i: number) => dataModel.value.config.chart.series.splice(i, 1)
 
 const submit = () => {
   if (isDonut.value) dataModel.value.config.chart.type = 'pie'

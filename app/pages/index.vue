@@ -26,47 +26,31 @@
             </div>
         </q-card>
 
-        <div class="row">
-            <div v-for="(col, i) in dataModel.renderCols" :key="i" :class="`q-pa-sm col-12 col-md-${col.w}`">
-                <div v-for="(item, c) in col.items" :key="c" class="q-mb-sm">
-                    <q-card flat bordered class="q-px-sm q-py-md relative-position">
-                        <div v-if="!item.loading" class="absolute-top-right q-pa-xs row q-gutter-sm no-wrap">
-                            <FilterDateWidget v-if="chartDateIncludes.includes(item.type) && item.dates"
-                                v-model="col.items[c]" @on-filter="forceFilterDate" />
-                            <q-btn-dropdown v-if="['coal_getting_chart'].includes(item.type)" flat round dense
-                                color="secondary" size="xs" icon="filter_alt" auto-close>
-                                <q-list dense style="min-width: 100px">
-                                    <q-item clickable @click="updateDataSource(item, 'both')"
-                                        :active="!item.dataSource || item.dataSource === 'both'">
-                                        <q-item-section>Both</q-item-section>
-                                    </q-item>
-                                    <q-item clickable @click="updateDataSource(item, 'rits')"
-                                        :active="item.dataSource === 'rits'">
-                                        <q-item-section>Rits Only</q-item-section>
-                                    </q-item>
-                                    <q-item clickable @click="updateDataSource(item, 'survey')"
-                                        :active="item.dataSource === 'survey'">
-                                        <q-item-section>Survey Only</q-item-section>
-                                    </q-item>
-                                </q-list>
-                                <q-tooltip>Filter Data Source</q-tooltip>
-                            </q-btn-dropdown>
-                            <q-btn v-if="tableIncludes.includes(item.type)" flat round dense color="secondary" size="xs"
-                                icon="table_chart" @click="showTable(item)">
-                                <q-tooltip>Show Raw Data Table</q-tooltip>
-                            </q-btn>
-                            <q-btn flat round dense color="secondary" size="xs" icon="refresh"
-                                @click="fetchWidget(item)">
-                                <q-tooltip>Refresh Widget</q-tooltip>
-                            </q-btn>
-                        </div>
-                        <q-skeleton v-if="item.loading" :height="`${item.h * 50 + 43}px`" />
-                        <template v-else>
-                            <div v-if="item.title" class="q-px-sm dash-title">{{ item.title }}</div>
-                            <div :ref="(el: any) => setWidgetRef(el, item.id)"></div>
-                        </template>
-                    </q-card>
+        <div class="dashboard-grid">
+            <div v-for="(item, i) in dataModel.widgets" :key="i" class="q-mb-sm dashboard-item" :style="getGridStyle(item)">
+                <q-card flat bordered class="q-px-sm q-py-md relative-position">
+                <div v-if="!item.loading" class="absolute-top-right q-pa-xs row q-gutter-sm no-wrap">
+                    <filter-date-widget v-if="chartDateIncludes.includes(item.type) && item.dates" v-model="dataModel.widgets[i]" @on-filter="forceFilterDate" />
+
+                    <q-btn flat round dense color="secondary" size="xs" icon="table_chart" @click="showTable(item)" v-if="tableIncludes.includes(item.type)">
+                        <q-tooltip>Show Raw Data Table</q-tooltip>
+                    </q-btn>
+
+                    <q-btn flat round dense color="secondary" size="xs" :icon="item.showLineLabel ? 'label' : 'label_off'" @click="fetchWidget(item, true)" v-if="chartLineIncludes.includes(item.type)">
+                        <q-tooltip>{{ item.showLineLabel ? 'Hide' : 'Show' }} Line Label</q-tooltip>
+                    </q-btn>
+
+                    <q-btn flat round dense color="secondary" size="xs" icon="refresh" @click="fetchWidget(item)">
+                        <q-tooltip>Refresh Widget</q-tooltip>
+                    </q-btn>
                 </div>
+                <q-skeleton v-if="item.loading" :height="`${item.h * 50 + (item.title ? item.config?.title?.fontsize || 17 : 0)}px`" />
+                <template v-else>
+                    <div v-if="item.title" class="q-px-sm dash-title ellipsis">{{ item.title }}</div>
+                    <div v-else class="q-pb-sm"></div>
+                    <div :ref="(el: any) => setWidgetRef(el, item.id)" :id="item.id"></div>
+                </template>
+                </q-card>
             </div>
         </div>
 
@@ -113,7 +97,7 @@ const { render } = useSafeHtml()
 
 const dataModel = ref<any>({
     name: '',
-    templates: [],
+    widgets: [],
 })
 
 const loading = ref(false)
@@ -155,8 +139,8 @@ onMounted(async () => {
 })
 
 const onRefresh = async () => {
-    if (dataModel.value.renderCols && dataModel.value.renderCols.length) {
-        await Promise.all(dataModel.value.renderCols.flatMap((col: any) => col.items.map((t: any) => fetchWidget(t))))
+    if (dataModel.value.widgets && dataModel.value.widgets.length) {
+        await Promise.all(dataModel.value.widgets.map((t: any) => fetchWidget(t)))
     }
 }
 
@@ -164,15 +148,27 @@ const forceFilterDate = async (t: any) => {
     if (t.dates) await fetchWidget(t, t.dates)
 }
 
-const updateDataSource = (t: any, source: string) => {
-    t.dataSource = source
-    const el = widgetRefs.get(t.id)
-    if (el && t.dataApi?.charts) {
-        renderStoredCharts(el, t.dataApi.charts.map((c: any) => c.id), $q.screen, t)
-    }
+const getGridStyle = (item: any) => {
+  return {
+    gridColumn: `${item.x + 1} / span ${item.w}`,
+    gridRow: `${item.y + 1} / span ${item.h}`,
+  }
 }
 
-const fetchWidget = async (t: any, forceDates: any = null) => {
+const fetchWidget = async (t: any, toggleLineLabel: boolean = true, forceDates: any = null) => {
+    if (!t.config) t.config = {}
+    if (!t.config.chartStyles) t.config.chartStyles = {}
+    if (!t.config.chartStyles.lineLabels) t.config.chartStyles.lineLabels = { show: true }
+
+    if (t.showLineLabel === undefined) {
+        t.showLineLabel = t.config.chartStyles.lineLabels.show
+    }
+
+    if (toggleLineLabel) {
+        t.showLineLabel = !t.showLineLabel
+        t.config.chartStyles.lineLabels.show = t.showLineLabel
+    }
+
     let dates = forceDates
 
     if (!dates) {
@@ -245,8 +241,13 @@ const renderStoredCharts = (containerEl: HTMLElement, chartIds: string[], screen
     chartIds.forEach((id) => {
         const originalCh = chartStore.get(id)
         if (!originalCh) return
+
         const target: any = containerEl.querySelector(`#${id}`)
-        if (!target) return
+
+        if (!target) {
+            console.error('Target element untuk Plotly benar-benar tidak ditemukan di dalam:', containerEl)
+            return
+        }
 
         const ch = JSON.parse(JSON.stringify(originalCh))
 
@@ -273,3 +274,27 @@ const submitDate = async () => {
     await onRefresh()
 }
 </script>
+
+<style lang="css" scoped>
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: auto;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+
+  .dashboard-item {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+}
+</style>

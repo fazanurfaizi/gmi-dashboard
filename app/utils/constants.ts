@@ -16,3 +16,42 @@ export const WIDGET_OPTIONS = [
   { label: 'Add Achievement Card', value: 'achievement_card' },
   { label: 'Add Table', value: 'table' }
 ];
+
+export const TABLE_SCHEMAS: Record<string, { name: string, format: string }[]> = {
+  procurements: [
+    { name: 'id', format: 'number' },
+    { name: 'year', format: 'number' },
+    { name: 'status', format: 'text' },
+    { name: 'no', format: 'number' },
+    { name: 'projectCode', format: 'text' },
+    { name: 'projectName', format: 'text' },
+    { name: 'location', format: 'text' },
+    { name: 'pm', format: 'text' },
+    { name: 'admin', format: 'text' },
+    { name: 'epc', format: 'text' },
+    { name: 'notes', format: 'text' },
+    { name: 'syncedAt', format: 'datetime' }
+  ],
+  installations: [
+    { name: 'id', format: 'number' },
+    { name: 'year', format: 'number' },
+    { name: 'status', format: 'text' },
+    { name: 'no', format: 'number' },
+    { name: 'note', format: 'text' },
+    { name: 'weeklyMeeting', format: 'text' },
+    { name: 'projectCode', format: 'text' },
+    { name: 'projectName', format: 'text' },
+    { name: 'location', format: 'text' },
+    { name: 'capacity', format: 'number' },
+    { name: 'unit', format: 'text' },
+    { name: 'pm', format: 'text' },
+    { name: 'admin', format: 'text' },
+    { name: 'sm', format: 'text' },
+    { name: 'manpowerUpdate', format: 'text' },
+    { name: 'epc', format: 'text' },
+    { name: 'developer', format: 'text' },
+    { name: 'roofType', format: 'text' },
+    { name: 'progressData', format: 'text' }, // JSON
+    { name: 'syncedAt', format: 'datetime' }
+  ]
+};

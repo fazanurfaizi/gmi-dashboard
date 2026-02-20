@@ -97,119 +97,114 @@ export interface ChartConfig {
   type: WidgetType;
   dataSource: string; // Sheet ID or table name
   query?: string; // SQL query or similar
-  
+
   // Data Mapping
   dimensions: string[]; // X-axis, Categories
   metrics: string[]; // Y-axis, Values
-  
+
   // Advanced mapping
   breakdown?: string; // Color/Group by
   secondAxis?: string; // Secondary metric for combo charts
   secondAxisType?: 'bar' | 'line'; // Type of the secondary axis chart
-  
+
   // Waterfall specific
   measureColumn?: string; // Column defining 'relative', 'total', etc.
-  
+
   filters?: FilterConfig[];
   sort?: SortConfig[];
   limit?: number;
-  
+
   styles?: ChartStyle;
 }
 
 export interface AdditionalAxisConfig {
-    type: AdditionalAxisType
-    name: string
-    color?: any
-    show?: boolean
-    lineDash?: string
+  type: AdditionalAxisType
+  name: string
+  color?: any
+  show?: boolean
+  lineDash?: string
 }
 
 export interface ColorSeries {
-    code: string
-    color: string
-    child?: string
+  code: string
+  color: string
+  child?: string
 }
 
 export interface ChartStyleConfig {
-    xaxis?: { show?: boolean; fontsize?: number }
-    yaxis?: { show?: boolean; fontsize?: number }
-    y2axis?: { show?: boolean; fontsize?: number }
-    legend?: { show?: boolean; position?: 'top' | 'bottom' | 'right' | 'left'; fontsize?: number }
-    labels?: { show?: boolean; fontsize?: number; position?: 'auto' | 'inside' | 'outside' }
-    lineLabels?: { show?: boolean; fontsize?: number }
-    options?: {
-        barMode?: 'group' | 'stack' | 'relative' | 'overlay'
-        lineDash?: 'solid' | 'dot' | 'dash' | 'longdash' | 'dashdot'
-    }
+  xaxis?: { show?: boolean; fontsize?: number }
+  yaxis?: { show?: boolean; fontsize?: number }
+  y2axis?: { show?: boolean; fontsize?: number }
+  legend?: { show?: boolean; position?: 'top' | 'bottom' | 'right' | 'left'; fontsize?: number }
+  labels?: { show?: boolean; fontsize?: number; position?: 'auto' | 'inside' | 'outside' }
+  lineLabels?: { show?: boolean; fontsize?: number }
+  options?: {
+    barMode?: 'group' | 'stack' | 'relative' | 'overlay'
+    lineDash?: 'solid' | 'dot' | 'dash' | 'longdash' | 'dashdot'
+  }
 }
 
 export interface TitleConfig {
-    align?: 'left' | 'center' | 'right',
-    fontsize?: number
+  align?: 'left' | 'center' | 'right',
+  fontsize?: number
 }
 
 export interface FilterItem {
-    name: string | number | null
-    operator: string | number | null
-    value: string | number | null
+  name: string | number | null
+  operator: string | number | null
+  value: string | number | null
 }
 
 export interface WidgetData {
-    id?: string
-    type: string
-    title: string
-    config: {
-        spreadsheetId?: string | null
-        sheetName?: string | null
-        dataSource?: string | null
-        app: string | null
-        endpoint: string | null
-        query: {
-            limit: number
-            order: string
-            applyFilterExactDateEnd?: boolean | null
-            filters: FilterItem[]
-        }
-        columns: {
-            id?: any
-            name?: any
-            label?: any
-            format?: any
-            precision?: number | null
-            aggregation?: any
-            datefilter?: boolean
-        }[]
-        chart: {
-            type: 'scatter' | 'line' | 'column' | 'bar' | 'area' | 'pie'
-            x: string | null
-            series: {
-                field: string | null
-                axis: 'y' | 'y2'
-                type: 'auto' | 'scatter' | 'line' | 'column' | 'area' | 'pie'
-                mode?: 'lines' | 'markers' | 'text' | 'lines+markers' | 'lines+text' | 'markers+text' | 'lines+markers+text'
-                fill?: 'none' | 'tozeroy' | 'tonexty'
-            }[]
-            legend: string | null
-            options?: { layout?: any; config?: any }
-        }
-        colorSeries: ColorSeries[]
-        companies?: string[] | null
-        locSchema?: string
-        material?: MaterialType
-        shows?: string[]
-        timeframe?: ChartTimeframe
-        timeframeDefaultValue?: number | null
-        additionalAxes?: AdditionalAxisConfig[]
-        grouping?: AdditionalAxisConfig
-        chartStyles?: ChartStyleConfig
-        showLineLabel?: boolean | null
-        title?: TitleConfig | null | undefined
+  id?: string
+  type: string
+  title: string
+  config: {
+    // spreadsheetId?: string | null
+    // sheetName?: string | null
+    dataSource?: string | null
+    // app: string | null
+    // endpoint: string | null
+    query: {
+      limit: number
+      order: string
+      applyFilterExactDateEnd?: boolean | null
+      filters: FilterItem[]
     }
-    x?: number
-    y?: number
-    w?: number
-    h?: number
+    columns: {
+      id?: any
+      name?: any
+      label?: any
+      format?: any
+      precision?: number | null
+      aggregation?: any
+      datefilter?: boolean
+    }[]
+    chart: {
+      type: 'scatter' | 'line' | 'column' | 'bar' | 'area' | 'pie'
+      x: string | null
+      series: {
+        field: string | null
+        axis: 'y' | 'y2'
+        type: 'auto' | 'scatter' | 'line' | 'column' | 'area' | 'pie'
+        mode?: 'lines' | 'markers' | 'text' | 'lines+markers' | 'lines+text' | 'markers+text' | 'lines+markers+text'
+        fill?: 'none' | 'tozeroy' | 'tonexty'
+      }[]
+      legend: string | null
+      options?: { layout?: any; config?: any }
+    }
+    colorSeries: ColorSeries[]    
+    shows?: string[]
+    timeframe?: ChartTimeframe
+    timeframeDefaultValue?: number | null    
+    chartStyles?: ChartStyleConfig
+    showLineLabel?: boolean | null
+    title?: TitleConfig | null | undefined
+  }
+  x?: number
+  y?: number
+  w?: number
+  h?: number
 }
 
 export interface Dashboard {

@@ -220,11 +220,6 @@ function transformInner(item: any) {
         if (textChart !== '') text += createList('Chart', textChart)
     }
 
-    if (Array.isArray(cfg.additionalAxes) && cfg.additionalAxes.length) {
-        const axes = cfg.additionalAxes.filter((v: any) => v?.show).map((v: any) => `${v.name} (${v.type})`).join(', ')
-        if (axes) text += createList('Additional Axes', `<li>${axes}</li>`)
-    }
-
     if (Array.isArray(cfg.colorSeries) && cfg.colorSeries.length) {
         const series = cfg.colorSeries.map((v: any) => `${v.code} (${v.color})`).join(', ')
         if (series) text += createList('Color Series', `<li>${series}</li>`)

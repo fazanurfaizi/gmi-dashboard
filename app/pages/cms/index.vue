@@ -188,12 +188,39 @@ function add(type: string) {
     type: type,
     title: type.replaceAll('_', ' ').toUpperCase(),
     config: {
-      app: null, endpoint: null, query: { limit: 0, order: 'createdAt:DESC', filters: [], applyFilterExactDateEnd: false },
-      company: null, applyFilterCompany: true, columns: [],
-      additionalAxes: [ { show: false, type: 'line', name: 'plan', color: COLORS.Plan }, { show: false, type: 'line', name: 'rain', color: COLORS.Rain } ],
+      dataSource: null,
+      query: {
+        limit: 0,
+        order: 'createdAt:DESC',
+        filters: [] 
+      },
+      columns: [],    
       colorSeries: [],
-      chart: { type: 'column', x: null, series: [], legend: null, options: { layout: { height: 420, margin: { l: 50, r: 40, t: 30, b: 60 } }, config: { responsive: true, displayModeBar: false } } },
-      chartStyles: { xaxis: { show: true, fontsize: 10 }, yaxis: { show: true, fontsize: 10 }, y2axis: { show: false, fontsize: 10 }, legend: { show: true, position: 'top', fontsize: 11 }, labels: { show: true, position: 'auto', fontsize: 10 }, lineLabels: { show: true, fontsize: 10 }, options: { barMode: 'group', lineDash: 'solid' } },
+      chart: {
+        type: 'column',
+        x: null,
+        series: [],
+        legend: null,
+        options: {
+          layout: { 
+            height: 420, 
+            margin: { l: 50, r: 40, t: 30, b: 60 } 
+          }, 
+          config: { 
+            responsive: true, 
+            displayModeBar: false 
+          } 
+        } 
+      },
+      chartStyles: {
+        xaxis: { show: true, fontsize: 10 },
+        yaxis: { show: true, fontsize: 10 },
+        y2axis: { show: false, fontsize: 10 },
+        legend: { show: true, position: 'top', fontsize: 11 },
+        labels: { show: true, position: 'auto', fontsize: 10 },
+        lineLabels: { show: true, fontsize: 10 },
+        options: { barMode: 'group', lineDash: 'solid' }
+      },
       showLineLabel: true,
     },
   } as WidgetData)
@@ -220,8 +247,7 @@ function editWidget(id: string) {
   if (target) {
     currentWidget.value = JSON.parse(JSON.stringify(target))
     if (!currentWidget.value!.config) currentWidget.value!.config = {} as any
-    if (!currentWidget.value!.config.title) currentWidget.value!.config.title = { align: 'left' }
-    if (!currentWidget.value!.config.additionalAxes) currentWidget.value!.config.additionalAxes = [ { show: false, type: 'line', name: 'plan', color: COLORS.Plan }, { show: false, type: 'line', name: 'rain', color: COLORS.Rain } ]
+    if (!currentWidget.value!.config.title) currentWidget.value!.config.title = { align: 'left' }    
     if (!currentWidget.value!.config.colorSeries || currentWidget.value!.config.colorSeries.length === 0) currentWidget.value!.config.colorSeries = []
     if (currentWidget.value!.config.timeframeDefaultValue === undefined) currentWidget.value!.config.timeframeDefaultValue = null
     if (!currentWidget.value!.config.chartStyles) currentWidget.value!.config.chartStyles = { xaxis: { show: true, fontsize: 10 }, yaxis: { show: true, fontsize: 10 }, y2axis: { show: false, fontsize: 10 }, legend: { show: true, position: 'top', fontsize: 11 }, labels: { show: true, position: 'auto', fontsize: 10 }, lineLabels: { show: true, fontsize: 10 }, options: { barMode: 'group', lineDash: 'solid' } }
