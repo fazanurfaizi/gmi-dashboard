@@ -35,6 +35,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     spreadsheetId: '',
+    username: '',
+    password: '',
     public: {
       spreadsheetId: ''
     }

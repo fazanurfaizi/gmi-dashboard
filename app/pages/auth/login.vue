@@ -7,10 +7,10 @@
       </q-card-section>
 
       <q-card-section>
-        <q-form @submit="onSubmit" class="q-gutter-md">
+        <q-form @submit="handleLogin" class="q-gutter-md">
           <q-input
             filled
-            v-model="form.username"
+            v-model="username"
             label="Username"
             lazy-rules
             :rules="[val => val && val.length > 0 || 'Please type something']"
@@ -19,14 +19,14 @@
           <q-input
             filled
             type="password"
-            v-model="form.password"
+            v-model="password"
             label="Password"
             lazy-rules
             :rules="[val => val && val.length > 0 || 'Please type something']"
           />
 
-          <div class="text-center text-negative q-mt-sm" v-if="errorMsg">
-            {{ errorMsg }}
+          <div class="text-center text-negative q-mt-sm" v-if="errorMessage">
+            {{ errorMessage }}
           </div>
 
           <div>
@@ -43,29 +43,35 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({
   layout: 'auth',
+  middleware: ['auth-middleware']
 })
 
-const auth = useAuthStore()
-const form = reactive({
-  username: '',
-  password: ''
-})
+const username = ref('')
+const password = ref('')
+const errorMessage = ref('')
 const loading = ref(false)
-const errorMsg = ref('')
 
-const onSubmit = async () => {
+const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogin = async () => {
   loading.value = true
-  errorMsg.value = ''
-  try {
-    await auth.login(form)
-  } catch (err: any) {
-    errorMsg.value = err?.statusMessage || 'Login failed'
-  } finally {
-    loading.value = false
+  errorMessage.value = ''
+  
+  const success = await authStore.login(username.value, password.value)
+  
+  if (success) {
+    router.push('/cms')
+  } else {
+    errorMessage.value = 'Invalid username or password'
   }
+  
+  loading.value = false
 }
 </script>

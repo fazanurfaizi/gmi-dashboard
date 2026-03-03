@@ -5,11 +5,10 @@
       <div class="row">
         <general-card title="General Info" col="12" use-top-section>
           <template #top-section-right>
-            <q-btn color="primary" label="Apply" type="button" @click="apply()" />
+            <q-btn color="primary" label="Save" type="button" @click="submit()" />
           </template>
-          
-          <q-input v-model="dataModel.code" label="Code" readonly />
-          <q-input v-model="dataModel.name" label="Name" />
+        
+          <q-input v-model="dataModel.name" label="Name" outlined dense />
         </general-card>
       </div>
 
@@ -56,7 +55,8 @@ import { initGrid, addWidget, getWidget, updateWidgetContent, removeWidget, remo
 import { WIDGET_OPTIONS } from '~/utils/constants'
 
 definePageMeta({
-  layout: 'cms'
+  layout: 'cms',
+  middleware: ['auth-middleware']
 })
 
 const $api = useApi()
@@ -131,11 +131,6 @@ const loadSavedWidgets = (widgets: any[]) => {
       void updateWidget(newWidget)
     }
   })
-}
-
-const apply = async () => {
-  if (hasEdit.value) await submit()
-  hasEdit.value = false
 }
 
 const submit = async () => {
@@ -245,7 +240,8 @@ function editWidget(id: string) {
     if (!currentWidget.value!.config.chartStyles) currentWidget.value!.config.chartStyles = { xaxis: { show: true, fontsize: 10 }, yaxis: { show: true, fontsize: 10 }, y2axis: { show: false, fontsize: 10 }, legend: { show: true, position: 'top', fontsize: 11 }, labels: { show: true, position: 'auto', fontsize: 10 }, lineLabels: { show: true, fontsize: 10 }, options: { barMode: 'group', lineDash: 'solid' } }
     activeTab.value = null    
   }
-  dialog.value.show = true
+  dialog.value.title = `Form ${target.title}`
+  dialog.value.show = true  
 }
 
 const updateWidget = (payload: any) => {
@@ -259,7 +255,11 @@ const updateWidget = (payload: any) => {
 }
 
 function getIcon(type: string) {
-  const map: Record<string, string> = { basic_chart: 'bar_chart', dashboard2: 'equalizer', waterfall_chart: 'waterfall_chart', dashboard4: 'area_chart', sparkline_chart: 'show_chart', achievementCard: 'military_tech', inventory: 'table_view', stockMovement: 'fast_forward', coalGettingWidget: 'stacked_bar_chart' }
+  const map: Record<string, string> = {
+    basic_chart: 'bar_chart',    
+    table: 'table_view',
+    project_summary: 'widgets'
+  }
   return map[type] || 'widgets'
 }
 

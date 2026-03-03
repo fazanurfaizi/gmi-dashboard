@@ -1,18 +1,11 @@
-import { useAuthStore } from "~/stores/auth"
+export default defineNuxtRouteMiddleware((to, from) => {
+  const token = useCookie('cms_auth_token')
 
-export default defineNuxtRouteMiddleware(async (to, from) => {
-  const auth = useAuthStore()
-
-  // Skip middleware on login page
-  if (to.path === '/login') return
-
-  // Try to fetch user if not loaded (e.g. on page refresh)
-  if (!auth.isLoggedIn) {
-    await auth.fetchUser()
+  if (to.path.startsWith('/cms') && !token.value) {
+    return navigateTo('/auth/login')
   }
 
-  // If still not logged in, redirect to login
-  if (!auth.isLoggedIn) {
-    return navigateTo('/login')
+  if (to.path === '/auth/login' && token.value) {
+    return navigateTo('/cms')
   }
 })

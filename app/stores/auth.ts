@@ -1,59 +1,40 @@
 import { defineStore } from 'pinia'
 
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    user: null as any | null,
-    loading: false
-  }),
+export const useAuthStore = defineStore('auth', () => {
+  const token = useCookie('cms_auth_token', {
+    maxAge: 60 * 60 * 24 * 7
+  })
 
-  getters: {
-    isLoggedIn: (state) => !!state.user
-  },
+  const isAuthenticated = computed(() => !!token.value)
 
-  actions: {
-    async login(credentials: any) {
-      const api = useApi()
-      this.loading = true
-      try {
-        const res: any = await api.post('auth/login', credentials)
-        this.user = res.data
-        const router = useRouter()
-        router.push('/')
+  async function login(username: string, password: string) {
+    try {
+      const res = await $fetch('/api/auth/login', {
+        method: 'POST',
+        body: { username, password }
+      })
+      
+      if (res.token) {
+        token.value = res.token
         return true
-      } catch (error) {
-        throw error
-      } finally {
-        this.loading = false
       }
-    },
-
-    async fetchUser() {
-      const api = useApi()
-      try {
-        const data = await api.get('auth/me')
-        this.user = data
-      } catch (error) {
-        this.user = null
-      }
-    },
-
-    async logout() {
-      const api = useApi()
-      try {
-        await api.post('auth/logout', {})
-      } catch (e) {
-        // ignore error
-      } finally {
-        this.user = null
-        const router = useRouter()
-        router.push('/login')
-      }
-    },
-
-    getCompanies() {
-      // Mock helper for your existing dashboard code
-      if (this.user?.companies === 'all') return ['Company A', 'Company B']
-      return []
+      return false
+    } catch (error) {
+      console.error('Login failed:', error)
+      return false
     }
+  }
+
+  function logout() {
+    token.value = null
+    const router = useRouter()
+    router.push('/auth/login')
+  }
+
+  return { 
+    token, 
+    isAuthenticated, 
+    login, 
+    logout 
   }
 })

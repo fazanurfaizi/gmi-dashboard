@@ -9,10 +9,7 @@ export const COLORS = {
 
 export const WIDGET_OPTIONS = [
   { label: 'Add Chart', value: 'basic_chart' },
-  { label: 'Add Waterfall', value: 'waterfall_chart' },
-  { label: 'Add Area Chart', value: 'area_chart' },
-  { label: 'Add Donut Chart', value: 'donut_chart' },
-  { label: 'Add Sparkline Chart', value: 'sparkline_chart' },
+  { label: 'Add Project Summary', value: 'project_summary' },
   { label: 'Add Table', value: 'table' }
 ];
 

@@ -5,9 +5,6 @@
                 <q-toolbar-title>
                     CMS Admin
                 </q-toolbar-title>
-                <q-btn flat round dense icon="logout" @click="logout">
-                    <q-tooltip>Logout</q-tooltip>
-                </q-btn>
             </q-toolbar>
         </q-header>       
 
