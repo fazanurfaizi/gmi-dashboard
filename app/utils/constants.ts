@@ -33,21 +33,32 @@ export const TABLE_SCHEMAS: Record<string, { name: string, format: string }[]> =
     { name: 'year', format: 'number' },
     { name: 'status', format: 'text' },
     { name: 'no', format: 'number' },
-    { name: 'note', format: 'text' },
-    { name: 'weeklyMeeting', format: 'text' },
+    { name: 'bastAndRetentionDate', format: 'text' },
+    { name: 'bastDocumentDate', format: 'text' },
     { name: 'projectCode', format: 'text' },
     { name: 'projectName', format: 'text' },
     { name: 'location', format: 'text' },
-    { name: 'capacity', format: 'number' },
+    { name: 'capacity', format: 'number' }, // real
     { name: 'unit', format: 'text' },
     { name: 'pm', format: 'text' },
     { name: 'admin', format: 'text' },
     { name: 'sm', format: 'text' },
-    { name: 'manpowerUpdate', format: 'text' },
+    { name: 'plan_oh', format: 'number' }, // integer
+    { name: 'actual_oh', format: 'number' }, // integer
+    { name: 'manpowerUpdate', format: 'number' }, // integer
     { name: 'epc', format: 'text' },
     { name: 'developer', format: 'text' },
     { name: 'roofType', format: 'text' },
-    { name: 'progressData', format: 'text' }, // JSON
+    { name: 'progressData', format: 'json' }, // text (mode: json)
+    { name: 'syncedAt', format: 'datetime' }
+  ],
+  notes: [
+    { name: 'id', format: 'number' },
+    { name: 'noteDate', format: 'datetime' },
+    { name: 'pm', format: 'text' },
+    { name: 'project_name', format: 'text' },
+    { name: 'notes', format: 'text' },
+    { name: 'year', format: 'number' },
     { name: 'syncedAt', format: 'datetime' }
   ]
 };

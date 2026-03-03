@@ -8,7 +8,20 @@
         </div>
 
         <div class="col-12 col-md-6 flex justify-end items-center">
-          <q-btn size="sm" icon="event" color="secondary" :label="labelYear" class="q-ma-sm">
+          <q-btn 
+            :loading="isSyncing"
+            size="sm"
+            icon="sync"
+            color="primary"
+            label="Sync Data"
+            class="q-ma-sm"
+            outline
+            @click="handleSyncSheet"
+          >
+            <q-tooltip>Sync data from Google Sheets</q-tooltip>
+          </q-btn>
+          
+          <q-btn size="sm" icon="event" color="primary" :label="labelYear" class="q-ma-sm">
             <q-menu cover anchor="top middle" ref="popupRef">
               <q-date minimal dense v-model="filter.year" default-view="Years" emit-immediately mask="YYYY" @update:model-value="submitYear">
                 <div class="q-py-sm text-h6 text-center text-primary">{{ labelYear }}</div>
@@ -123,6 +136,7 @@ const dataModel = ref<any>({
 })
 
 const loading = ref(false)
+const isSyncing = ref(false)
 
 const currentYear = new Date().getFullYear()
 
@@ -196,20 +210,31 @@ const handleWidgetClick = (event: MouseEvent) => {
   }
 }
 
-onMounted(async () => {
-  loading.value = true
+const handleSyncSheet = async () => {
+  isSyncing.value = true
+  try {    
+    const response = await $fetch('/api/sheet')
+    
+    $q.notify({
+      type: 'positive',
+      message: (response as any).message || 'Sheet data synced successfully!',
+      position: 'top',
+      icon: 'check_circle'
+    })
 
-  if (typeof window === 'undefined') return
-  if (!window.Plotly) {
-    const mod = await import('plotly.js-dist-min')
-    window.Plotly = mod.default
+    await onRefresh()
+  } catch (error: any) {
+    console.error('Sync error:', error)
+    $q.notify({
+      type: 'negative',
+      message: error.data?.message || error.message || 'Failed to sync sheet data',
+      position: 'top',
+      icon: 'warning'
+    })
+  } finally {
+    isSyncing.value = false
   }
-
-  await Promise.all([fetchDashboard(), fetchPms()])
-  loading.value = false
-
-  await onRefresh()
-})
+}
 
 const onRefresh = async () => {
   if (dataModel.value.widgets && dataModel.value.widgets.length) {
@@ -407,6 +432,21 @@ const submitYear = async () => {
   popupRef.value?.hide()
   await onRefresh()
 }
+
+onMounted(async () => {
+  loading.value = true
+
+  if (typeof window === 'undefined') return
+  if (!window.Plotly) {
+    const mod = await import('plotly.js-dist-min')
+    window.Plotly = mod.default
+  }
+
+  await Promise.all([fetchDashboard(), fetchPms()])
+  loading.value = false
+
+  await onRefresh()
+})
 </script>
 
 <style lang="css">

@@ -31,8 +31,8 @@ export const runMigrations = async () => {
                 year integer NOT NULL,
                 status text,
                 no integer,
-                note text,
-                weekly_meeting text,
+                bast_and_retention_date text,
+                bast_document_date text,
                 project_code text,
                 project_name text,
                 location text,
@@ -41,6 +41,8 @@ export const runMigrations = async () => {
                 pm text,
                 admin text,
                 sm text,
+                plan_oh integer,
+                actual_oh integer,
                 manpower_update integer,
                 epc text,
                 developer text,
@@ -65,6 +67,18 @@ export const runMigrations = async () => {
                 epc text,
                 notes text,
                 synced_at integer
+            );
+        `)
+
+        await db.run(sql`
+            CREATE TABLE IF NOT EXISTS notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                note_date INTEGER,
+                pm TEXT NOT NULL,
+                project_name TEXT,
+                notes TEXT,
+                year INTEGER NOT NULL,
+                synced_at INTEGER
             );
         `)
 

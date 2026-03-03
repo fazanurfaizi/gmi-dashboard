@@ -1,18 +1,25 @@
-import { getSheetData } from '~~/server/service/sheet.service'
+import { syncSheets } from '~~/server/service/sheet.service'
 
 export default defineEventHandler(async (event) => {
-    const query = getQuery(event)
-    const spreadsheetId = query.id as string
-    const targetSheet = query.sheet as string
-    const limit = query.limit ? parseInt(query.limit as string) : 0
+    const db = useDrizzle()
+    const config = useRuntimeConfig()
+    const spreadsheetId = config.spreadsheetId as string
+
+    if (!spreadsheetId) {
+        console.warn('⚠️ Spreadsheet ID not found in runtime config.')
+        return
+    }
 
     if (!spreadsheetId) {
         throw createError({ statusCode: 400, message: 'Spreadsheet ID is required' })
     }
 
     try {
-        const result = await getSheetData(spreadsheetId, targetSheet, limit)
-        return { status: 200, ...result }
+        await syncSheets(db, spreadsheetId)
+        return { 
+            status: 200,
+            message: 'sync sheet data success'
+        }
     } catch (error: any) {
         throw createError({
             statusCode: 500,

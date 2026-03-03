@@ -9,7 +9,7 @@ export default defineNitroPlugin(async () => {
     const db = useDrizzle()
 
     try {
-        // await runMigrations()
+        await runMigrations()
         
         const existing = await db.select().from(dashboards).where(
             eq(dashboards.code, DEFAULT_DASHBOARD_CODE)

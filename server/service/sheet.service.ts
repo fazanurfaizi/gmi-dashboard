@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx'
 import type { Db } from '~~/server/utils/db'
-import { syncInstallationData, syncProcurementData } from '../utils/seed'
+import { syncInstallationData, syncProcurementData, syncNotesData } from '../utils/seed'
 
 export async function getSheetData(spreadsheetId: string, targetSheet?: string, limit: number = 0) {
     const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`
@@ -43,21 +43,25 @@ export async function syncSheets(db: Db, spreadsheetId: string) {
 
         const arrayBuffer = await response.arrayBuffer()
         const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true })
-
+        
         for (const sheetName of workbook.SheetNames) {
             const procurementMatch = sheetName.match(/Pengadaan\s*\((\d{4})\)/i)
             const installationMatch = sheetName.match(/Jasa Instalasi\s*\((\d{4})\)/i)
 
-            if (procurementMatch) {
+            if (sheetName === 'Update To Do PM') {
+                const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: false, range: 2 })
+                syncNotesData(db, data, currentYear)
+                console.log('Processing PM notes')
+            } else if (procurementMatch) {
                 const year = parseInt(procurementMatch[1] ?? currentYear)
-                console.log(`Processing Procuremenets for Year: ${year}`)
                 const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, range: 3 })
                 syncProcurementData(db, data, year)
+                console.log(`Processing Procuremenets for Year: ${year}`)
             } else if (installationMatch) {
                 const year = parseInt(installationMatch[1] ?? currentYear)
-                console.log(`Processing Installations for Year: ${year}`)
                 const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, header: 1 }) as any[][]
                 syncInstallationData(db, data, year)
+                console.log(`Processing Installations for Year: ${year}`)
             }
         }
     } catch (error) {
