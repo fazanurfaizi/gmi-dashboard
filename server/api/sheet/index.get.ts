@@ -10,10 +10,12 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        await syncSheets(db, spreadsheetId)
+        const result = await syncSheets(db, spreadsheetId)
+        
         return { 
-            status: 200,
-            message: 'sync sheet data success'
+            statusCode: 200,
+            message: 'Sheet data synchronized successfully',
+            summary: result
         }
     } catch (error: any) {
         throw createError({

@@ -119,7 +119,7 @@ export function syncInstallationData(db: Db, rawData: any[][], year: number) {
   }
 }
 
-export async function syncNotesData(db: Db, rawData: any[], currentYear: string) {
+export function syncNotesData(db: Db, rawData: any[], currentYear: string) {
   if (!rawData || rawData.length === 0) {
     console.log('No data found in "Update To Do PM" sheet.');
     return;

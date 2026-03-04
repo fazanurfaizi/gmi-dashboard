@@ -34,37 +34,41 @@ export async function getSheetData(spreadsheetId: string, targetSheet?: string, 
 
 export async function syncSheets(db: Db, spreadsheetId: string) {
     const currentYear = new Date().getFullYear().toString()
+    const processedSheets: string[] = [] // Keep track of what we processed
 
-    try {
-        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`
-        const response = await fetch(url)
+    const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`
+    const response = await fetch(url)
 
-        if (!response.ok) throw new Error(`Failed to fetch sheet: ${response.statusText}`)
+    if (!response.ok) {
+        throw new Error(`Failed to fetch sheet from Google: ${response.statusText} (${response.status})`)
+    }
 
-        const arrayBuffer = await response.arrayBuffer()
-        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true })
-        
-        for (const sheetName of workbook.SheetNames) {
-            const procurementMatch = sheetName.match(/Pengadaan\s*\((\d{4})\)/i)
-            const installationMatch = sheetName.match(/Jasa Instalasi\s*\((\d{4})\)/i)
+    const arrayBuffer = await response.arrayBuffer()
+    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true })
+    
+    for (const sheetName of workbook.SheetNames) {
+        const procurementMatch = sheetName.match(/Pengadaan\s*\((\d{4})\)/i)
+        const installationMatch = sheetName.match(/Jasa Instalasi\s*\((\d{4})\)/i)
 
-            if (sheetName === 'Update To Do PM') {
-                const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: false, range: 2 })
-                syncNotesData(db, data, currentYear)
-                console.log('Processing PM notes')
-            } else if (procurementMatch) {
-                const year = parseInt(procurementMatch[1] ?? currentYear)
-                const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, range: 3 })
-                syncProcurementData(db, data, year)
-                console.log(`Processing Procuremenets for Year: ${year}`)
-            } else if (installationMatch) {
-                const year = parseInt(installationMatch[1] ?? currentYear)
-                const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, header: 1 }) as any[][]
-                syncInstallationData(db, data, year)
-                console.log(`Processing Installations for Year: ${year}`)
-            }
+        if (sheetName === 'Update To Do PM') {
+            const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: false, range: 2 })
+            syncNotesData(db, data, currentYear)
+            processedSheets.push(sheetName)
+        } else if (procurementMatch) {
+            const year = parseInt(procurementMatch[1] ?? currentYear)
+            const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, range: 3 })
+            syncProcurementData(db, data, year)
+            processedSheets.push(sheetName)
+        } else if (installationMatch) {
+            const year = parseInt(installationMatch[1] ?? currentYear)
+            const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, header: 1 }) as any[][]
+            syncInstallationData(db, data, year)
+            processedSheets.push(sheetName)
         }
-    } catch (error) {
-        console.error(error)
+    }
+
+    return {
+        totalProcessed: processedSheets.length,
+        sheets: processedSheets
     }
 }
