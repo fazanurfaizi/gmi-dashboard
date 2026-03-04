@@ -1,0 +1,9 @@
+name = "excel-dashboard"
+pages_build_output_dir = ".output/public"
+compatibility_date = "2024-04-05"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gmi-dashboard"
+database_id = "f371abcb-62bf-498e-b0f1-34362a064d19"
+migrations_dir = "./server/database/migrations"

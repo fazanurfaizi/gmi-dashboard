@@ -2,11 +2,12 @@ import { eq, desc, asc, like, gte, lte, ne, gt, lt, and } from 'drizzle-orm'
 import { installations, notes, procurements } from '~~/server/database/schema'
 import { ColumnConfig, ComparisonOperator, DataRow, WidgetData } from '~~/types/dashboard'
 import { getDashboardById } from './cms.service'
+import type { H3Event } from 'h3'
 
 type DrizzleRow = Record<string, unknown>
 
-export async function getClientDashboard(id: number = 1) {
-    const result = await getDashboardById(id)
+export async function getClientDashboard(event: H3Event, id: number = 1) {
+    const result = await getDashboardById(event, id)
 
     let sortedWidgets = result.widgets || []
 
@@ -34,12 +35,12 @@ export async function getClientDashboard(id: number = 1) {
     }
 }
 
-export async function fetchAndAggregateWidgetData(config: WidgetData['config'], widgetType: string): Promise<DataRow[]> {
+export async function fetchAndAggregateWidgetData(event: H3Event, config: WidgetData['config'], widgetType: string): Promise<DataRow[]> {
     if (!config.dataSource || config.dataSource.length === 0) {
         throw createError({ statusCode: 400, message: "No data source specified." })
     }
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     const dataSources = Array.isArray(config.dataSource) ? config.dataSource : [config.dataSource]
     if (widgetType === 'table' && !dataSources.includes('notes')) {

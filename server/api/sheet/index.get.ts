@@ -1,7 +1,7 @@
 import { syncSheets } from '~~/server/service/sheet.service'
 
 export default defineEventHandler(async (event) => {
-    const db = useDrizzle()
+    const db = useDrizzle(event)
     const config = useRuntimeConfig()
     const spreadsheetId = config.spreadsheetId as string
 

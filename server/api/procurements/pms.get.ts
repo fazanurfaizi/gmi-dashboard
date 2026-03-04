@@ -2,7 +2,7 @@ import { getProcurementPMs } from '~~/server/service/procurement.service'
 
 export default defineEventHandler(async (event) => {
     try {
-        const pms = await getProcurementPMs()
+        const pms = await getProcurementPMs(event)
         
         return {
             status: 200,

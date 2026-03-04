@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
     if (!id) throw createError({ statusCode: 400, message: 'Invalid ID' })
 
     const body = await readBody(event)
-    const result = await updateDashboard(id, body)
+    const result = await updateDashboard(event, id, body)
     
     return { status: 200, data: result }
 })

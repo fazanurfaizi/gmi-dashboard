@@ -3,6 +3,7 @@ import { renderTableWidget } from '~~/server/utils/widget/table'
 import { renderChartWidget } from '~~/server/utils/widget/chart'
 import { renderProjectSummaryWidget } from '~~/server/utils/widget/summary'
 import type { WidgetData, WidgetRenderResult } from '~~/types/dashboard'
+import type { H3Event } from 'h3'
 
 interface WidgetRequestParams {
     type: string;
@@ -10,8 +11,8 @@ interface WidgetRequestParams {
     height?: number;
 }
 
-export async function processWidgetGeneration(req: WidgetRequestParams): Promise<WidgetRenderResult> {
-    const rows = await fetchAndAggregateWidgetData(req.config, req.type)
+export async function processWidgetGeneration(event: H3Event, req: WidgetRequestParams): Promise<WidgetRenderResult> {
+    const rows = await fetchAndAggregateWidgetData(event, req.config, req.type)
 
     let html = ''
     let charts: WidgetRenderResult['charts'] = []

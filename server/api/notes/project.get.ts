@@ -10,7 +10,7 @@ export default eventHandler(async (event) => {
         return []
     }
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
     
     const result = await db.select()
         .from(notes)

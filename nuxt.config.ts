@@ -28,6 +28,7 @@ export default defineNuxtConfig({
   },
   ssr: true,
   nitro: {
+    preset: 'cloudflare-pages',
     compatibilityDate: '2025-01-30',
     experimental: {
       tasks: true
