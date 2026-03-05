@@ -198,15 +198,19 @@ const handleWidgetClick = (event: MouseEvent) => {
   if (statusCard) {
     const summaryStr = statusCard.getAttribute('data-status-summary')
     const statusName = statusCard.getAttribute('data-status-name')
+    const cardType = statusCard.getAttribute('data-type') || 'installations'
+
     if (summaryStr) {
       try {
         const breakdownData = JSON.parse(decodeURIComponent(summaryStr))
 
         dialog.value.props = {
           title: statusName || 'Detail',
-          data: breakdownData
+          data: breakdownData,
+          status: statusName,
+          type: cardType
         }
-        dialog.value.title = statusName
+        dialog.value.title = `Detail ${cardType} - ${statusName}`
         dialog.value.type = 'summary'
         dialog.value.show = true
       } catch (e) {

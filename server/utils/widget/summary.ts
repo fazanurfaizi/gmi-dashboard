@@ -7,7 +7,8 @@ interface AggregatedProjectData {
     totalCapacity: number
     procurementStatusCounts: Record<string, number>
     installationStatusCounts: Record<string, number>
-    encodeBreakdown: (statusKey: string) => string
+    encodeProcurementBreakdown: (statusKey: string) => string 
+    encodeInstallationBreakdown: (statusKey: string) => string
 }
 
 export function renderProjectSummaryWidget(
@@ -35,13 +36,17 @@ export function renderProjectSummaryWidget(
         'Retensi': 0
     }
 
-    const breakdownAgg: Record<string, Record<string, Record<string, number>>> = {}
+    const procurementBreakdownAgg: Record<string, Record<string, Record<string, number>>> = {}
+    const installationBreakdownAgg: Record<string, Record<string, Record<string, number>>> = {}
 
     rows.forEach(row => {
         if (row['procurements.id']) {
             procurementCount++
-            
+
             const status = String(row['procurements.status'] || row['status']).trim()
+            const pic = String(row['procurements.pm'] || '-').trim()
+            const year = String(row['procurements.year'] || '-').trim()
+            
             if (status) {
                 const matchedKey = Object.keys(procurementStatusCounts).find((k) => k.toLowerCase() === status.toLowerCase())
                 const finalStatusKey = matchedKey || status
@@ -50,6 +55,12 @@ export function renderProjectSummaryWidget(
                     procurementStatusCounts[matchedKey]++
                 } else if (status !== 'undefined' && status !== 'null') {
                     procurementStatusCounts[finalStatusKey] = (procurementStatusCounts[finalStatusKey] || 0) + 1
+                }
+
+                if (finalStatusKey !== 'undefined' && finalStatusKey !== 'null') {
+                    if (!procurementBreakdownAgg[finalStatusKey]) procurementBreakdownAgg[finalStatusKey] = {}
+                    if (!procurementBreakdownAgg[finalStatusKey][pic]) procurementBreakdownAgg[finalStatusKey][pic] = {}
+                    procurementBreakdownAgg[finalStatusKey][pic][year] = (procurementBreakdownAgg[finalStatusKey][pic][year] || 0) + 1
                 }
             }
         }
@@ -75,16 +86,16 @@ export function renderProjectSummaryWidget(
                 }
 
                 if (finalStatusKey !== 'undefined' && finalStatusKey !== 'null') {
-                    if (!breakdownAgg[finalStatusKey]) breakdownAgg[finalStatusKey] = {}
-                    if (!breakdownAgg[finalStatusKey][pic]) breakdownAgg[finalStatusKey][pic] = {}
-                    breakdownAgg[finalStatusKey][pic][year] = (breakdownAgg[finalStatusKey][pic][year] || 0) + 1
+                    if (!installationBreakdownAgg[finalStatusKey]) installationBreakdownAgg[finalStatusKey] = {}
+                    if (!installationBreakdownAgg[finalStatusKey][pic]) installationBreakdownAgg[finalStatusKey][pic] = {}
+                    installationBreakdownAgg[finalStatusKey][pic][year] = (installationBreakdownAgg[finalStatusKey][pic][year] || 0) + 1
                 }
             }
         }
     })
 
-    const encodeBreakdown = (statusKey: string) => {
-        const data = breakdownAgg[statusKey] || {}
+    const createEncodeFn = (agg: Record<string, Record<string, Record<string, number>>>) => (statusKey: string) => {
+        const data = agg[statusKey] || {}
         const result: { pic: string, year: string, count: number }[] = []
         
         for (const pic of Object.keys(data)) {
@@ -105,7 +116,8 @@ export function renderProjectSummaryWidget(
         totalCapacity,
         procurementStatusCounts,
         installationStatusCounts,
-        encodeBreakdown
+        encodeProcurementBreakdown: createEncodeFn(procurementBreakdownAgg),
+        encodeInstallationBreakdown: createEncodeFn(installationBreakdownAgg)
     }
 
     let innerHtml = ''
@@ -124,14 +136,14 @@ export function renderProjectSummaryWidget(
     return { html, charts: [] }
 }
 
-function renderStatusGrid(counts: Record<string, number>, encodeFn?: (statusKey: string) => string): string {
+function renderStatusGrid(type: 'installations' | 'procurements', counts: Record<string, number>, encodeFn?: (statusKey: string) => string): string {
     const statuses = Object.keys(counts)
     
     return statuses.map(status => {
         const count = counts[status]
 
         const cardAttributes = encodeFn 
-            ? `class="bg-grey-2 rounded-borders q-pa-sm full-height cursor-pointer hoverable-card" data-status-summary="${encodeFn(status)}" data-status-name="${status}"`
+            ? `class="bg-grey-2 rounded-borders q-pa-sm full-height cursor-pointer hoverable-card" data-status-summary="${encodeFn(status)}" data-status-name="${status}" data-type="${type}"`
             : `class="bg-grey-2 rounded-borders q-pa-sm full-height"`
 
         return `
@@ -175,7 +187,7 @@ function renderMonitoringTemplate(data: AggregatedProjectData): string {
             <div class="bg-white shadow-1 rounded-borders q-pa-md">
                 <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-md text-center text-uppercase">Status Pemasangan</div>
                 <div class="row q-col-gutter-sm text-center">
-                    ${renderStatusGrid(data.installationStatusCounts, data.encodeBreakdown)}
+                    ${renderStatusGrid('installations', data.installationStatusCounts, data.encodeInstallationBreakdown)}
                 </div>
             </div>
         </div>
@@ -189,7 +201,7 @@ function renderMonitoringTemplate(data: AggregatedProjectData): string {
             <div class="bg-white shadow-1 rounded-borders q-pa-md">
                 <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-md text-center text-uppercase">Status Pengadaan</div>
                 <div class="row q-col-gutter-sm text-center">
-                    ${renderStatusGrid(data.procurementStatusCounts)}
+                    ${renderStatusGrid('procurements', data.procurementStatusCounts, data.encodeProcurementBreakdown)}
                 </div>
             </div>
         </div>
@@ -230,7 +242,7 @@ function renderExecutiveTemplate(data: AggregatedProjectData): string {
             <div class="bg-white shadow-1 rounded-borders q-pa-md full-height">
                 <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-md text-center text-uppercase">Status Pengadaan</div>
                 <div class="row q-col-gutter-sm text-center">
-                    ${renderStatusGrid(data.procurementStatusCounts)}
+                    ${renderStatusGrid('procurements', data.procurementStatusCounts, data.encodeProcurementBreakdown)}
                 </div>
             </div>
         `)
@@ -241,7 +253,7 @@ function renderExecutiveTemplate(data: AggregatedProjectData): string {
             <div class="bg-white shadow-1 rounded-borders q-pa-md full-height">
                 <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-md text-center text-uppercase">Status Pemasangan</div>
                 <div class="row q-col-gutter-sm text-center">
-                    ${renderStatusGrid(data.installationStatusCounts, data.encodeBreakdown)}
+                    ${renderStatusGrid('installations', data.installationStatusCounts, data.encodeInstallationBreakdown)}
                 </div>
             </div>
         `)

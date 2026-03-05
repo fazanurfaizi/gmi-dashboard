@@ -1,8 +1,19 @@
-import { getProcurementPMs } from '~~/server/service/procurement.service'
+import { asc, isNotNull } from 'drizzle-orm'
+import { installations } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
     try {
-        const pms = await getProcurementPMs(event)
+        const db = useDrizzle(event)
+        
+        const results = await db
+            .select({ pm: installations.pm })
+            .from(installations)
+            .where(isNotNull(installations.pm))
+            .groupBy(installations.pm)
+            .orderBy(asc(installations.pm))
+            .all()
+    
+        const pms= results.map((row) => row.pm).filter(Boolean)
         
         return {
             status: 200,
