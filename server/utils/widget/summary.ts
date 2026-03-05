@@ -23,7 +23,7 @@ export function renderProjectSummaryWidget(
     let totalCapacity = 0
     
     const procurementStatusCounts: Record<string, number> = {
-        'On Progres': 0,
+        'On progres': 0,
         'Close': 0,
         'Menunggu TTD BAST': 0,
         'Retensi': 0

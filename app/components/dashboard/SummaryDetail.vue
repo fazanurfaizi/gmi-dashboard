@@ -68,6 +68,7 @@ const props = defineProps<{
     data: any[];
     status?: string; // e.g., 'On Going'
     type?: string;   // e.g., 'installations' or 'procurements'
+    projectName?: string;
   }
 }>()
 
@@ -103,7 +104,11 @@ const toggleRow = async (rowProps: any) => {
         const endpointType = props.project.type === 'procurements' ? 'procurements' : 'installations'
         const status = props.project.status || props.project.title
 
-        const url = `/${endpointType}?pm=${rowProps.row.pic}&year=${rowProps.row.year}&status=${status}`
+        let url = `/${endpointType}?pm=${rowProps.row.pic}&year=${rowProps.row.year}&status=${status}`
+        if (props.project.projectName && props.project.projectName.trim() !== '') {
+          url += `&projectName=${encodeURIComponent(props.project.projectName.trim())}`
+        }
+
         const response = await $api.get(url)
 
         details.value[key] = response.data?.data || response.data || response || []

@@ -2,12 +2,31 @@
   <q-page padding class="q-px-md q-py-sm">
     <general-spinner-loading v-if="loading" />
     <q-card v-else flat style="border-radius: 8px 0px 0px 0px" class="q-pa-sm">
-      <div class="row items-center q-mb-md q-col-gutter-md">
-        <div class="col-12 col-md-6 flex items-center">
+      <div class="row items-center justify-between q-mb-md q-col-gutter-md">
+  
+        <div class="col-12 col-md-4 flex items-center justify-start">
           <div class="text-h6 text-weight-bold">{{ dataModel.name }}</div>
         </div>
 
-        <div class="col-12 col-md-6 flex justify-end items-center">
+        <div class="col-12 col-md-4 flex justify-center items-center">
+          <q-input 
+            v-model="filter.search"
+            dense
+            outlined
+            placeholder="Cari Nama Projek..."
+            class="bg-white full-width"
+            style="max-width: 350px;"
+            @keyup.enter="onRefresh"
+            clearable
+            @clear="onRefresh"
+          >
+            <template v-slot:append>
+              <q-icon name="search" class="cursor-pointer" @click="onRefresh" />
+            </template>
+          </q-input>
+        </div>
+
+        <div class="col-12 col-md-4 flex justify-end items-center">
           <q-btn 
             :loading="isSyncing"
             size="sm"
@@ -29,6 +48,7 @@
             </q-menu>
           </q-btn>
         </div>
+        
       </div>
     </q-card>
 
@@ -169,6 +189,7 @@ const isSyncing = ref(false)
 const currentYear = new Date().getFullYear()
 
 const filter = ref<any>({
+  search: '',
   year: currentYear.toString()
 })
 
@@ -236,7 +257,8 @@ const handleWidgetClick = (event: MouseEvent) => {
           title: statusName || 'Detail',
           data: breakdownData,
           status: statusName,
-          type: cardType
+          type: cardType,
+          projectName: filter.value.search
         }
         dialog.value.title = `Detail ${cardType} - ${statusName}`
         dialog.value.type = 'summary'
@@ -432,7 +454,7 @@ const fetchWidget = async (t: any) => {
   if (!t.config.query) t.config.query = { filters: [] }
   if (!t.config.query.filters) t.config.query.filters = []
 
-  t.config.query.filters = t.config.query.filters.filter((f: any) => !f.isGlobalYear)
+  t.config.query.filters = t.config.query.filters.filter((f: any) => !f.isGlobalYear && !f.isGlobalSearch)
 
   const hasLocalYearFilter = t.config.query.filters.some((f: any) => f.name === 'year' && !f.isGlobalYear)
 
@@ -444,6 +466,15 @@ const fetchWidget = async (t: any) => {
       t.config.query.filters.push({ name: 'year', operator: '>=', value: Number(y.from), isGlobalYear: true })
       t.config.query.filters.push({ name: 'year', operator: '<=', value: Number(y.to), isGlobalYear: true })
     }
+  }
+
+  if (filter.value.search && filter.value.search.trim() !== '') {
+    t.config.query.filters.push({ 
+      name: 'projectName', 
+      operator: 'LIKE', 
+      value: filter.value.search.trim(), 
+      isGlobalSearch: true
+    })
   }
 
   const req = {
