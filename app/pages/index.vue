@@ -65,6 +65,34 @@
                 </q-btn>
 
                 <q-btn
+                  v-if="['basic_chart', 'donut_chart', 'bar_chart', 'waterfall_chart'].includes(item.type) && Array.isArray(item.config?.dataSource) && item.config.dataSource.length > 1"
+                  size="sm"
+                  outline
+                  color="primary"
+                  icon="layers"
+                  :label="item._activeSource || item.config.dataSource[0]"
+                  class="text-capitalize"
+                >
+                  <q-menu>
+                    <div class="column q-pa-sm q-gutter-y-xs" style="min-width: 150px">
+                      <div class="text-caption text-grey-8 q-px-xs q-pb-xs">Pilih Data Source</div>
+                      <q-btn
+                        v-for="src in item.config.dataSource"
+                        :key="src"
+                        :label="src"
+                        :color="(item._activeSource || item.config.dataSource[0]) === src ? 'primary' : 'secondary'"
+                        :flat="(item._activeSource || item.config.dataSource[0]) !== src"
+                        size="sm"
+                        align="left"
+                        class="text-capitalize"
+                        v-close-popup
+                        @click="updateWidgetSource(item, src)"
+                      />
+                    </div>
+                  </q-menu>
+                </q-btn>
+
+                <q-btn
                   v-if="item.type === 'project_summary' && item.config?.summaryTemplate === 'monitoring'"
                   size="sm"
                   outline
@@ -336,6 +364,32 @@ const updateWidgetFilter = async (item: any, filterName: string, value: any) => 
 
   if (value !== 'All') {
     item.config.query.filters.push({ name: filterName, operator: '=', value: value, isGlobalYear: false })
+  }
+
+  await fetchWidget(item)
+}
+
+const updateWidgetSource = async (item: any, newSource: string) => {
+  const oldSource = item._activeSource || item.config.dataSource[0]
+  if (oldSource === newSource) return
+  item._activeSource = newSource
+
+  if (item.config?.chart) {
+    if (item.config.chart.x) {
+      item.config.chart.x = item.config.chart.x.replace(oldSource, newSource)
+    }
+    
+    if (item.config.chart.legend) {
+      item.config.chart.legend = item.config.chart.legend.replace(oldSource, newSource)
+    }
+    
+    if (item.config.chart.series && Array.isArray(item.config.chart.series)) {
+      item.config.chart.series.forEach((s: any) => {
+        if (s.field) {
+          s.field = s.field.replace(oldSource, newSource)
+        }
+      })
+    }
   }
 
   await fetchWidget(item)

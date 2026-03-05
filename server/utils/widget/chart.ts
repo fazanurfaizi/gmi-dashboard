@@ -26,8 +26,19 @@ export function renderChartWidget(
     const colLabelMap: Record<string, string> = {}
     config.columns.forEach(c => { colLabelMap[c.name] = c.label || c.name })
 
+    const cleanRows = rows.filter(r => {
+        const xVal = chartCfg.x ? r[chartCfg.x] : 'valid';
+        const legendVal = chartCfg.legend ? r[chartCfg.legend] : 'valid';
+
+        if (chartCfg.x && (xVal === undefined || xVal === null || xVal === 'undefined' || xVal === '')) return false;
+        if (chartCfg.legend && (legendVal === undefined || legendVal === null || legendVal === 'undefined' || legendVal === '')) return false;
+
+        return true;
+    });
+
     const groups: Record<string, DataRow[]> = {}
-    rows.forEach(r => {
+    
+    cleanRows.forEach(r => {
         const key = chartCfg.legend ? String(r[chartCfg.legend]) : "Series"
         if (!groups[key]) groups[key] = []
         groups[key]!.push(r)
@@ -53,16 +64,23 @@ export function renderChartWidget(
         const xKey = chartCfg.x;
 
         for (const [groupName, items] of Object.entries(groups)) {
-            // Sort internal items by X-Axis
             items.sort((a, b) => String(a[xKey]) > String(b[xKey]) ? 1 : -1)
 
             chartCfg.series.forEach(s => {
                 const t = s.type !== "auto" ? s.type : chartCfg.type
 
-                // Resolve legend label
                 let legendLabel = groupName
-                if (s.name) legendLabel = s.name
-                else if (multiSeries) legendLabel = colLabelMap[s.field] || s.field
+                if (s.name) {
+                    legendLabel = s.name
+                } else if (multiSeries) {
+                    const fallbackLabel = colLabelMap[s.field] || s.field;
+                    if (s.field.includes('.')) {
+                        const tableName = s.field.split('.')[0];
+                        if (tableName) legendLabel = tableName.charAt(0).toUpperCase() + tableName.slice(1);
+                    } else {
+                        legendLabel = fallbackLabel;
+                    }
+                }
 
                 const trace: PlotlyTrace = {
                     name: legendLabel,
@@ -87,7 +105,6 @@ export function renderChartWidget(
         }
     }
 
-    // Layout Configuration
     const layout: Record<string, unknown> = {
         height: height || 400,
         margin: { l: 50, r: 50, t: 30, b: 60 },
@@ -99,7 +116,6 @@ export function renderChartWidget(
         layout.xaxis = { type: "category", ...(layout.xaxis as object || {}) }
     }
 
-    // Secondary Y axis Check
     if (chartCfg.series.some(s => s.axis === 'y2')) {
         layout.yaxis2 = { overlaying: "y", side: "right", showgrid: false, ...(layout.yaxis2 as object || {}) }
     }
