@@ -4,8 +4,21 @@
     <q-card v-else flat style="border-radius: 8px 0px 0px 0px" class="q-pa-sm">
       <div class="row items-center justify-between q-mb-md q-col-gutter-md">
   
-        <div class="col-12 col-md-4 flex items-center justify-start">
-          <div class="text-h6 text-weight-bold">{{ dataModel.name }}</div>
+        <div class="col-12 col-md-4 flex items-center justify-start q-gutter-sm">
+          <div class="col-12 col-md-4 flex items-center justify-start">
+            <div class="text-h6 text-weight-bold">{{ dataModel.name }}</div>
+          </div>
+  
+          <!-- <q-btn
+            flat
+            round
+            dense
+            :icon="themeStore.isDark ? 'light_mode' : 'dark_mode'"
+            :color="themeStore.isDark ? 'warning' : 'grey-8'"
+            @click="handleThemeToggle"
+          >
+            <q-tooltip>Toggle {{ themeStore.isDark ? 'Light' : 'Dark' }} Mode</q-tooltip>
+          </q-btn> -->
         </div>
 
         <div class="col-12 col-md-4 flex justify-center items-center">
@@ -156,10 +169,22 @@
 <script setup lang="ts">
 import { enhanceXAxisDensity, getLayout, getConfig, applyChartStyles, applyTitleStyles } from '~/utils/chartHelper'
 import { useQuasar } from 'quasar'
+import { useThemeStore } from '~/stores/theme'
 
 definePageMeta({
   layout: 'dashboard'
 })
+
+const props = defineProps({
+  code: { type: String, required: false },
+})
+
+const { registerPlotlyContainer } = usePlotlyAutoResize()
+const { render } = useSafeHtml()
+
+const $api = useApi()
+const $q = useQuasar()
+const themeStore = useThemeStore()
 
 const dialog = ref<any>({
   show: false,
@@ -170,13 +195,7 @@ const dialog = ref<any>({
   persistent: false,
 })
 
-const { registerPlotlyContainer } = usePlotlyAutoResize()
-const $api = useApi()
-const props = defineProps({
-  code: { type: String, required: false },
-})
-const $q = useQuasar()
-const { render } = useSafeHtml()
+
 
 const dataModel = ref<any>({
   name: '',
@@ -549,8 +568,15 @@ const submitYear = async () => {
   await onRefresh()
 }
 
+// const handleThemeToggle = () => {
+//   themeStore.toggleTheme()
+//   $q.dark.set(themeStore.isDark)
+// }
+
 onMounted(async () => {
   loading.value = true
+
+  $q.dark.set(false)
 
   if (typeof window === 'undefined') return
   if (!window.Plotly) {
