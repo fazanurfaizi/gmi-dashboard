@@ -52,7 +52,7 @@ export function renderTableWidget(
   columns: ColumnConfig[] | undefined,
   dataSource: string[] | null | undefined,
   height?: number
-): WidgetRenderResult {
+): WidgetRenderResult {  
   if (!columns || columns.length === 0) {
     return { html: "<div class='text-grey q-pa-md'>Column is not configured</div>", charts: [] }
   }
@@ -63,9 +63,10 @@ export function renderTableWidget(
   const cleanRows = rows.filter(row => {
     return columns.every(col => {
       const val = row[col.id || col.name];
+      console.log(val)
 
       if (val === undefined || val === 'undefined' || val === null || val === '') return false;
-      if (typeof val === 'object' && Object.keys(val).length === 0) return false;
+      // if (typeof val === 'object' && Object.keys(val).length === 0) return false;
       
       return true;
     });
