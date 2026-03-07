@@ -67,7 +67,7 @@
         <div class="col-12 col-md-8">
           <q-card flat bordered class="full-height">
             <q-card-section class="q-pa-sm">
-              <div class="text-h6 text-primary">Progress Pekerjaan vs Pengeluaran</div>
+              <div class="text-h6 text-primary">Progress Pekerjaan</div>
             </q-card-section>
             <q-card-section class="q-pa-sm q-pt-none">
               <div ref="chartRef" style="width: 100%; height: 400px;"></div>
