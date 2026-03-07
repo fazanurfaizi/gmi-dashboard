@@ -45,7 +45,7 @@
                 </q-item>
                 <q-item>
                   <q-item-section>
-                    <q-item-label caption>Progress Keuangan</q-item-label>                   
+                    <q-item-label caption>Pekerjaan</q-item-label>                   
                     <q-item-label class="text-weight-bold text-dark">
                       {{ detail?.financeData?.progress * 100 }}%
                     </q-item-label>
@@ -144,15 +144,24 @@ const renderChart = () => {
 
   const layout = {
     autosize: true,
+    dragmode: false,
     barmode: 'group',
+    bargap: 0.1,
+    bargroupgap: 0.1,
     margin: { t: 20, r: 20, l: 40, b: 60 },
     xaxis: { type: 'category' },
     yaxis: { title: 'Persentase (%)', range: [0, Math.max(105, expense + 10)] },
     legend: { orientation: 'h', y: -0.2 }
   }
 
+  const config = {
+    responsive: true,
+    displayModeBar: false,
+    scrollZoom: false
+  }
+
   if (typeof window !== 'undefined' && (window as any).Plotly) {
-    ;(window as any).Plotly.newPlot(chartRef.value, [traceProject, traceFinance], layout, { responsive: true })
+    ;(window as any).Plotly.newPlot(chartRef.value, [traceProject, traceFinance], layout, config)
     
     if (resizeObserver) resizeObserver.disconnect()
     

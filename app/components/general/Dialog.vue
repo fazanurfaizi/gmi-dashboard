@@ -13,7 +13,7 @@
         v-if="dataModel.show" 
         class="modal-card column no-wrap" 
         :style="!dataModel.maximize ? `max-width: 98vw; width: ${optimizeWidth()}; max-height: 90vh;` : ''"
-      >      
+      >
         <q-bar class="modal-bar full-width bg-grey-3 text-dark">
           <div class="text-bold">{{ dataModel.title }}</div>
           <q-space />
@@ -69,7 +69,7 @@ if (Screen.lt.sm) dataModel.value.maximize = true
 else dataModel.value.maximize = dataModel.value.maximize || false
 
 const optimizeWidth = () => {
-  return Screen.lt.md ? '95vw' : dataModel.value.width
+  return Screen.lt.md ? '95vw' : (dataModel.value.width ?? '60vw')
 }
 
 const onHide = () => {

@@ -1,148 +1,212 @@
-import { v4 as uuidv4 } from 'uuid'
-import { WidgetRenderResult, DataRow, PlotlyTrace, WidgetData } from "~~/types/dashboard";
+import { v4 as uuidv4 } from "uuid"
+import { WidgetRenderResult, DataRow, PlotlyTrace, WidgetData, DataValue } from "~~/types/dashboard"
+
+type Trace = PlotlyTrace & {
+  text?: DataValue[]
+  textposition?: string
+  textfont?: { size: number }
+}
+
+function cleanAndSortChartData(data: Trace[]): Trace[] {
+  return data
+    .filter((d) => d.name && d.name !== 'undefined')
+    .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+}
+
+function resolveSeriesType(seriesType?: string, chartType?: string) {
+  if (!seriesType || seriesType === 'auto') return chartType
+  return seriesType
+}
+
+function cleanRows(rows: DataRow[], chartConfig: WidgetData['config']['chart']) {
+  return rows.filter((row) => {
+    const xVal = chartConfig.x ? row[chartConfig.x] : 'valid'
+    const legendVal = chartConfig.legend ? row[chartConfig.legend] : 'valid'
+
+    if (chartConfig.x && !xVal) return false
+    if (chartConfig.legend && !legendVal) return false
+
+    return true
+  })
+}
+
+function groupRows(rows: DataRow[], legend?: string | null) {
+  const groups: Record<string, DataRow[]> = {}
+
+  rows.forEach((row) => {
+    const key = legend ? String(row[legend]) : 'Series'
+    if (!groups[key]) groups[key] = []
+    groups[key].push(row)
+  })
+
+  return groups
+}
+
+function buildTrace(
+  items: DataRow[],
+  series: WidgetData['config']['chart']['series'][0],
+  chartConfig: WidgetData['config']['chart'],
+  legendLabel: string,
+  chartStyles: WidgetData['config']['chartStyles'],
+): Trace {
+  const xKey = chartConfig.x!
+  const values = items.map((item) => item[series.field])
+  const type = resolveSeriesType(series.type, chartConfig.type)
+
+  const trace: Trace = {
+    name: legendLabel,
+    yaxis: series.axis === "y2" ? "y2" : "y"
+  }
+
+  switch (type) {
+    case "scatter":
+      trace.type = "scatter"
+      trace.mode = series.mode || "markers"
+      trace.x = items.map(i => i[xKey])
+      trace.y = values
+      break
+    case "line":
+      trace.type = "scatter"
+      trace.mode = series.mode || "lines+markers"
+      trace.x = items.map(i => i[xKey])
+      trace.y = values
+      break
+    case "area":
+      trace.type = "scatter"
+      trace.mode = series.mode || "lines"
+      trace.fill = series.fill || "tozeroy"
+      trace.x = items.map(i => i[xKey])
+      trace.y = values
+      break
+    case "column":
+      trace.type = "bar"
+      trace.x = items.map(i => i[xKey])
+      trace.y = values
+      break
+    case "bar":
+      trace.type = "bar"
+      trace.orientation = "h"
+      trace.y = items.map(i => i[xKey])
+      trace.x = values
+      break
+  }
+
+  if (chartStyles?.labels?.show) {
+    trace.text = values
+    trace.textposition = chartStyles.labels.position || 'auto'
+    if (chartStyles.labels.fontsize) {
+      trace.textfont = {
+        size: chartStyles.labels.fontsize
+      }
+    }
+  }
+
+  return trace
+}
+
+function buildLayout(
+  chartConfig: WidgetData["config"]["chart"],
+  chartStyles: WidgetData["config"]["chartStyles"],
+  height?: number
+) {
+  const layout: Record<string, unknown> = {
+    height: height || 400,
+    margin: { l: 50, r: 50, t: 30, b: 60 },
+    bargap: 0.35,
+    bargroupgap: 0.15,
+    ...(chartConfig.options?.layout || {})
+  }
+
+  if (chartConfig.type !== "pie") {
+    layout.xaxis = { type: "category", categoryorder: "category ascending" }
+  }
+
+  if (chartStyles?.options?.barMode) {
+    layout.barmode = chartStyles.options.barMode
+  }
+
+  if (chartStyles?.legend) {
+    const pos = chartStyles.legend.position || 'bottom'
+
+    const map = {
+      top: { orientation: "h", y: 1.1, x: 0.5, xanchor: "center" },
+      bottom: { orientation: "h", y: -0.25, x: 0.5, xanchor: "center" },
+      right: { orientation: "v", x: 1.05, y: 0.5 },
+      left: { orientation: "v", x: -0.1, y: 0.5 }
+    }
+
+    layout.legend = {
+      ...map[pos],
+      ...(chartStyles.legend.fontsize
+        ? { font: { size: chartStyles.legend.fontsize } }
+        : {})
+    }
+
+    layout.showlegend = chartStyles.legend.show ?? true
+  }
+
+  return layout
+}
 
 export function renderChartWidget(
-    rows: DataRow[],
-    config: WidgetData['config'],
-    height?: number
+  rows: DataRow[],
+  config: WidgetData["config"],
+  height?: number
 ): WidgetRenderResult {
-    if (!config || !config.columns || config.columns.length === 0) {
-        throw createError({ statusCode: 400, message: "Please fill column config first." })
-    }
+  if (!config?.columns?.length) {
+    throw createError({ statusCode: 400, message: "Please fill column config first." })
+  }
 
-    const chartCfg = config.chart
-    if (!chartCfg || !chartCfg.series || chartCfg.series.length === 0) {
-        throw createError({ statusCode: 400, message: "Please insert minimal 1 series." })
-    }
+  const chartConfig = config.chart
+  if (!chartConfig?.series?.length) {
+    throw createError({ statusCode: 400, message: "Please insert minimal 1 series." })
+  }
 
-    const chartId = `widget-${uuidv4()}`
-    if (!rows || rows.length === 0) {
-        return {
-            html: `<div class="row q-col-gutter-md"><div class="col-12"><div id="${chartId}" class="plotly-graph-div"></div></div></div>`,
-            charts: [{ id: chartId, data: [], layout: {}, config: {} }]
-        }
-    }
+  const chartId = `widget-${uuidv4()}`
 
-    const colLabelMap: Record<string, string> = {}
-    config.columns.forEach(c => { colLabelMap[c.name] = c.label || c.name })
+  const filteredRows = cleanRows(rows, chartConfig)
+  const groups = groupRows(filteredRows, chartConfig.legend)
 
-    const cleanRows = rows.filter(r => {
-        const xVal = chartCfg.x ? r[chartCfg.x] : 'valid';
-        const legendVal = chartCfg.legend ? r[chartCfg.legend] : 'valid';
+  const traces: Trace[] = []
 
-        if (chartCfg.x && (xVal === undefined || xVal === null || xVal === 'undefined' || xVal === '')) return false;
-        if (chartCfg.legend && (legendVal === undefined || legendVal === null || legendVal === 'undefined' || legendVal === '')) return false;
+  for (const [groupName, items] of Object.entries(groups)) {
+    if (groupName === null || groupName === undefined) continue
 
-        return true;
-    });
+    items.sort((a, b) =>
+      String(a[chartConfig.x!]).localeCompare(String(b[chartConfig.x!]))
+    )
 
-    const groups: Record<string, DataRow[]> = {}
-
-    cleanRows.forEach(r => {
-        const key = chartCfg.legend ? String(r[chartCfg.legend]) : "Series"
-        if (!groups[key]) groups[key] = []
-        groups[key]!.push(r)
+    chartConfig.series.forEach((series) => {
+      if (series.name !== undefined || series.name !== null || series.name === "undefined") {
+        const trace = buildTrace(
+          items,
+          series,
+          chartConfig,
+          series.name || groupName,
+          config.chartStyles
+        )
+        traces.push(trace)
+      }
     })
+  }
 
-    const traces: PlotlyTrace[] = []
-    const multiSeries = chartCfg.series.length > 1
+  const layout = buildLayout(chartConfig, config.chartStyles, height)
 
-    if (chartCfg.type === "pie") {
-        const s = chartCfg.series[0]
-        const xField = chartCfg.legend || chartCfg.x;
+  const finalConfig = {
+    responsive: true,
+    displayModeBar: false,
+    ...(chartConfig.options?.config || {})
+  }
 
-        if (xField && s) {
-            traces.push({
-                type: "pie",
-                labels: rows.map(r => r[xField]),
-                values: rows.map(r => r[s.field]),
-                name: s.name || colLabelMap[s.field] || s.field
-            })
-        }
-    } else {
-        if (!chartCfg.x) throw createError({ statusCode: 400, message: "x axis must be defined" })
-        const xKey = chartCfg.x;
-
-        for (const [groupName, items] of Object.entries(groups)) {
-            // Sort items internally
-            items.sort((a, b) => String(a[xKey]) > String(b[xKey]) ? 1 : -1)
-
-            chartCfg.series.forEach(s => {
-                const t = s.type !== "auto" ? s.type : chartCfg.type
-
-                let legendLabel = groupName
-                if (s.name) {
-                    legendLabel = s.name
-                } else if (multiSeries) {
-                    const fallbackLabel = colLabelMap[s.field] || s.field;
-                    if (s.field.includes('.')) {
-                        const tableName = s.field.split('.')[0];
-                        if (tableName) legendLabel = tableName.charAt(0).toUpperCase() + tableName.slice(1);
-                    } else {
-                        legendLabel = fallbackLabel;
-                    }
-                }
-
-                const trace: PlotlyTrace = {
-                    name: legendLabel,
-                    x: items.map(i => i[xKey]),
-                    y: items.map(i => i[s.field]),
-                    yaxis: s.axis === 'y2' ? 'y2' : 'y'
-                }
-
-                if (s.mode) trace.mode = s.mode
-                else if (t === "line" || t === "area") {
-                    trace.type = "scatter"
-                    trace.mode = "lines+markers"
-                    if (t === "area") trace.fill = s.fill || "tozeroy"
-                } else if (t === "column" || t === "bar") {
-                    trace.type = "bar"
-                    if (t === "bar") trace.orientation = "h"
-                    trace.opacity = 0.7
-                }
-
-                traces.push(trace)
-            })
-        }
-    }
-
-    // Sort all traces alphabetically by their 'name' property
-    traces.sort((a, b) => {
-        const nameA = String(a.name || '').toLowerCase();
-        const nameB = String(b.name || '').toLowerCase();
-        return nameA.localeCompare(nameB);
-    });
-
-    const layout: Record<string, unknown> = {
-        height: height || 400,
-        margin: { l: 50, r: 50, t: 30, b: 60 },
-        legend: { orientation: "h", x: 0.5, xanchor: "center", y: -0.25 },
-        ...(chartCfg.options?.layout || {})
-    }
-
-    if (chartCfg.type !== "pie") {
-        layout.xaxis = {
-            type: "category",
-            categoryorder: "category ascending",
-            ...(layout.xaxis as object || {})
-        }
-    }
-
-    if (chartCfg.series.some(s => s.axis === 'y2')) {
-        layout.yaxis2 = { overlaying: "y", side: "right", showgrid: false, ...(layout.yaxis2 as object || {}) }
-    }
-
-    const finalConfig = {
-        responsive: true,
-        displayModeBar: false,
-        ...(chartCfg.options?.config || {})
-    }
-
-    const html = `<div class="row q-col-gutter-md">
-        <div class="col-12">
-            <div id="${chartId}" class="plotly-graph-div" style="min-height: ${height}px !important; max-height: ${height}px !important;"></div>
-        </div>
+  const html = `
+    <div class="row q-col-gutter-md">
+      <div class="col-12">
+        <div id="${chartId}" class="plotly-graph-div" style="min-height:${height}px"></div>
+      </div>
     </div>`
 
-    return { html, charts: [{ id: chartId, data: traces, layout, config: finalConfig }] }
+  return {
+    html,
+    charts: [{ id: chartId, data: cleanAndSortChartData(traces), layout, config: finalConfig }]
+  }
 }
