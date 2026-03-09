@@ -209,7 +209,7 @@ const currentProgress = computed(() => {
     if (data.finance && !isNaN(parseFloat(data.finance))) lastFinance = parseFloat(data.finance)
   }
 
-  const formatValue = (val: any) => val <= 1 && val > 0 ? (val * 100).toFixed(2) : val
+  const formatValue = (val: any) => (val * 100).toFixed(2)
 
   return { 
     project: formatValue(lastProject), 
@@ -224,7 +224,7 @@ const progressList = computed(() => {
     if (val === null || val === undefined || val === '') return '-'
     const num = parseFloat(val)
     if (isNaN(num)) return val
-    return num > 0 && num <= 1 ? `${(num * 100).toFixed(2)}%` : `${num}%`
+    return `${(num * 100).toFixed(2)}%`
   }
 
   return Object.entries(detail.value.progressData).map(([date, data]: [string, any]) => ({
@@ -250,12 +250,12 @@ const renderChart = () => {
   
   const projectData = dates.map(d => {
     const val = parseFloat(rawData[d].project)
-    return isNaN(val) ? null : (val <= 1 && val > 0 ? val * 100 : val)
+    return isNaN(val) ? null : val * 100
   })
   
   const financeData = dates.map(d => {
     const val = parseFloat(rawData[d].finance)
-    return isNaN(val) ? null : (val <= 1 && val > 0 ? val * 100 : val)
+    return isNaN(val) ? null : val * 100
   })
 
   const traceProject = {

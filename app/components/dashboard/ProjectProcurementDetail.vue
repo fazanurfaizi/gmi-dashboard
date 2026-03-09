@@ -47,7 +47,7 @@
                   <q-item-section>
                     <q-item-label caption>Pekerjaan</q-item-label>                   
                     <q-item-label class="text-weight-bold text-dark">
-                      {{ detail?.financeData?.progress * 100 }}%
+                      {{ (detail?.financeData?.progress * 100).toFixed(2) }}%
                     </q-item-label>
                   </q-item-section>
                 </q-item>
@@ -55,7 +55,7 @@
                   <q-item-section>
                     <q-item-label caption>Pengeluaran</q-item-label>                   
                     <q-item-label class="text-weight-bold text-dark">
-                      {{ detail?.financeData?.expense * 100 }}%
+                      {{ (detail?.financeData?.expense * 100).toFixed(2) }}%
                     </q-item-label>
                   </q-item-section>
                 </q-item>
@@ -123,8 +123,8 @@ const renderChart = () => {
   let expense = parseFloat(detail.value.financeData.expense) || 0
 
   // Format to percentages if needed
-  progress = progress <= 1 && progress > 0 ? progress * 100 : progress
-  expense = expense <= 1 && expense > 0 ? expense * 100 : expense
+  progress = progress * 100
+  expense = expense * 100
 
   const traceProject = {
     x: ['Status Saat Ini'],
